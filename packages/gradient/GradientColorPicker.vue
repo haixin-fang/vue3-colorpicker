@@ -24,10 +24,10 @@
     </div>
     <div class="vc-gradient-picker__body">
       <div class="vc-color-range" ref="colorRangeRef">
-        <div class="vc-color-range__container">
+        <div class="vc-color-range__container" ref="refColorBar">
           <div class="vc-background" :style="gradientBg"></div>
           <div class="vc-gradient__stop__container">
-            <div
+            <!-- <div
               class="vc-gradient__stop"
               :class="{
                 'vc-gradient__stop--current': state.startActive,
@@ -46,6 +46,20 @@
               ref="stopGradientRef"
               :title="lang?.end"
               :style="{ left: getEndColorLeft + 'px' }"
+            >
+              <span class="vc-gradient__stop--inner"></span>
+            </div> -->
+            <div
+              class="vc-gradient__stop"
+              v-for="(item, index) in colors"
+              :key="index"
+              :class="{
+                'vc-gradient__stop--current': index == state.selectIndex,
+              }"
+              ref="startGradientRef"
+              :style="{ left: `calc(${item.pst + '%'} - 8px)` }"
+              @mousedown="sliderPotDown(index, $event)"
+              @click="clickGColorPot(index)"
             >
               <span class="vc-gradient__stop--inner"></span>
             </div>
@@ -79,500 +93,582 @@
 </template>
 
 <script lang="ts">
-  import { computed, defineComponent, inject, reactive, ref, watch } from "vue";
-  import propTypes from "vue-types";
-  import { tryOnMounted, useDebounceFn, useLocalStorage, whenever } from "@vueuse/core";
-  import { DOMUtils } from "@aesoper/normal-utils";
-  import tinycolor from "tinycolor2";
+import { computed, defineComponent, inject, reactive, ref, watch } from "vue";
+import propTypes from "vue-types";
+import {
+  tryOnMounted,
+  useDebounceFn,
+  useLocalStorage,
+  whenever,
+  useEventListener,
+} from "@vueuse/core";
+import { DOMUtils } from "@aesoper/normal-utils";
+import tinycolor from "tinycolor2";
 
-  import Alpha from "../common/Alpha.vue";
-  import Palette from "../common/Palette.vue";
-  import Board from "../common/Board.vue";
-  import Hue from "../common/Hue.vue";
-  import Lightness from "../common/Lightness.vue";
-  import History from "../common/History.vue";
-  import Display from "../common/Display.vue";
-  import { Color, HistoryColorKey, MAX_STORAGE_LENGTH } from "../utils/color";
-  import { ColorPickerProvider, ColorPickerProviderKey } from "../utils/type";
-  import Angle from "../angle/Angle";
+import Alpha from "../common/Alpha.vue";
+import Palette from "../common/Palette.vue";
+import Board from "../common/Board.vue";
+import Hue from "../common/Hue.vue";
+import Lightness from "../common/Lightness.vue";
+import History from "../common/History.vue";
+import Display from "../common/Display.vue";
+import { Color, HistoryColorKey, MAX_STORAGE_LENGTH } from "../utils/color";
+import { ColorPickerProvider, ColorPickerProviderKey } from "../utils/type";
+import Angle from "../angle/Angle";
 
-  export default defineComponent({
-    name: "GradientColorPicker",
-    components: { Angle, Display, Alpha, Palette, Board, Hue, Lightness, History },
-    props: {
-      startColor: propTypes.instanceOf(Color).isRequired,
-      endColor: propTypes.instanceOf(Color).isRequired,
-      startColorStop: propTypes.number.def(0),
-      endColorStop: propTypes.number.def(100),
-      angle: propTypes.number.def(0),
-      type: propTypes.oneOf(["linear", "radial"]).def("linear"),
-      disableHistory: propTypes.bool.def(false),
-      roundHistory: propTypes.bool.def(false),
-      disableAlpha: propTypes.bool.def(false),
-      pickerType: propTypes.oneOf(["fk", "chrome"]).def("fk"),
-    },
-    emits: [
-      "update:startColor",
-      "update:endColor",
-      "update:angle",
-      "update:startColorStop",
-      "update:endColorStop",
-      "startColorChange",
-      "endColorChange",
-      "advanceChange",
-      "angleChange",
-      "startColorStopChange",
-      "endColorStopChange",
-      "typeChange",
-    ],
-    setup(props, { emit }) {
-      const state = reactive({
-        startActive: true,
-        startColor: props.startColor,
-        endColor: props.endColor,
-        startColorStop: props.startColorStop,
-        endColorStop: props.endColorStop,
-        angle: props.angle,
-        type: props.type,
+export default defineComponent({
+  name: "GradientColorPicker",
+  components: { Angle, Display, Alpha, Palette, Board, Hue, Lightness, History },
+  props: {
+    startColor: propTypes.instanceOf(Color).isRequired,
+    endColor: propTypes.instanceOf(Color).isRequired,
+    startColorStop: propTypes.number.def(0),
+    endColorStop: propTypes.number.def(100),
+    angle: propTypes.number.def(0),
+    type: propTypes.oneOf(["linear", "radial"]).def("linear"),
+    disableHistory: propTypes.bool.def(false),
+    roundHistory: propTypes.bool.def(false),
+    disableAlpha: propTypes.bool.def(false),
+    pickerType: propTypes.oneOf(["fk", "chrome"]).def("fk"),
+    colors: propTypes.array.def([]),
+    colorStops: propTypes.array.def([]),
+  },
+  emits: [
+    "update:startColor",
+    "update:endColor",
+    "update:angle",
+    "update:startColorStop",
+    "update:endColorStop",
+    "startColorChange",
+    "endColorChange",
+    "advanceChange",
+    "angleChange",
+    "startColorStopChange",
+    "endColorStopChange",
+    "typeChange",
+  ],
+  setup(props, { emit }) {
+    const state:any = reactive({
+      startActive: true,
+      startColor: props.startColor,
+      endColor: props.endColor,
+      startColorStop: props.startColorStop,
+      endColorStop: props.endColorStop,
+      angle: props.angle,
+      type: props.type,
 
-        // rgba
-        startColorRgba: props.startColor.toRgbString(),
-        endColorRgba: props.endColor.toRgbString(),
-      });
+      // rgba
+      startColorRgba: props.startColor.toRgbString(),
+      endColorRgba: props.endColor.toRgbString(),
+      colors: props.colors,
+      colorStops: props.colorStops,
+      selectIndex: 0,
+      movePst: {
+        x: 0,
+        y: 0,
+      },
+      pageX: 0,
+      pageY: 0,
+      mouseStartPst: {
+        x: 0,
+        y: 0,
+      },
+      startMovePst: 0,
+    });
+    let isSelectBoxMouseDown = false;
 
-      const parent = inject<ColorPickerProvider>(ColorPickerProviderKey);
+    const parent = inject<ColorPickerProvider>(ColorPickerProviderKey);
 
-      const advancePanelShow = ref(props.pickerType === "chrome");
+    const advancePanelShow = ref(props.pickerType === "chrome");
 
-      // Ref
-      const startGradientRef = ref<HTMLElement>();
-      const stopGradientRef = ref<HTMLElement>();
-      const colorRangeRef = ref<HTMLElement>();
+    // Ref
+    const startGradientRef = ref<HTMLElement>();
+    const stopGradientRef = ref<HTMLElement>();
+    const colorRangeRef = ref<HTMLElement>();
+    const refColorBar = ref<HTMLElement>();
+    watch(
+      () => [props.startColor, props.endColor, props.angle],
+      (val: any[]) => {
+        state.startColor = val[0];
+        state.endColor = val[1];
+        state.angle = val[2];
+      }
+    );
 
-      watch(
-        () => [props.startColor, props.endColor, props.angle],
-        (val: any[]) => {
-          state.startColor = val[0];
-          state.endColor = val[1];
-          state.angle = val[2];
-        }
-      );
+    watch(
+      () => props.type,
+      (val: any) => {
+        state.type = val;
+      }
+    );
 
-      watch(
-        () => props.type,
-        (val: any) => {
-          state.type = val;
-        }
-      );
-
-      const currentColor: any = computed({
-        get: () => {
-          return state.startActive ? state.startColor : state.endColor;
-        },
-        set: (v) => {
-          if (state.startActive) {
-            state.startColor = v;
-            return;
-          }
-          state.endColor = v;
-        },
-      });
-
-      const getStartColorLeft = computed(() => {
-        if (colorRangeRef.value && startGradientRef.value) {
-          const alpha = state.startColorStop / 100;
-          const rect = colorRangeRef.value.getBoundingClientRect();
-          const offsetWidth = startGradientRef.value.offsetWidth;
-
-          return Math.round(alpha * (rect.width - offsetWidth) + offsetWidth / 2);
-        }
-
-        return 0;
-      });
-
-      const getEndColorLeft = computed(() => {
-        if (colorRangeRef.value && stopGradientRef.value) {
-          const alpha = state.endColorStop / 100;
-          const rect = colorRangeRef.value.getBoundingClientRect();
-          const offsetWidth = stopGradientRef.value.offsetWidth;
-
-          return Math.round(alpha * (rect.width - offsetWidth) + offsetWidth / 2);
-        }
-
-        return 0;
-      });
-
-      const gradientBg = computed(() => {
-        let background = `background: linear-gradient(${state.angle}deg, ${state.startColorRgba} ${state.startColorStop}%, ${state.endColorRgba} ${state.endColorStop}%)`;
-        if (state.type === "radial") {
-          background = `background: radial-gradient(circle, ${state.startColorRgba} ${state.startColorStop}%, ${state.endColorRgba} ${state.endColorStop}%)`;
-        }
-        return background;
-      });
-
-      const dragStartRange = (evt: MouseEvent) => {
-        state.startActive = true;
-        if (colorRangeRef.value && startGradientRef.value) {
-          const rect = colorRangeRef.value?.getBoundingClientRect();
-
-          let left = evt.clientX - rect.left;
-          left = Math.max(startGradientRef.value.offsetWidth / 2, left);
-          left = Math.min(left, rect.width - startGradientRef.value.offsetWidth / 2);
-
-          state.startColorStop = Math.round(
-            ((left - startGradientRef.value.offsetWidth / 2) /
-              (rect.width - startGradientRef.value.offsetWidth)) *
-              100
-          );
-
-          emit("update:startColorStop", state.startColorStop);
-          emit("startColorStopChange", state.startColorStop);
-        }
-      };
-
-      const dragEndRange = (evt: MouseEvent) => {
-        state.startActive = false;
-
-        if (colorRangeRef.value && stopGradientRef.value) {
-          const rect = colorRangeRef.value?.getBoundingClientRect();
-
-          let left = evt.clientX - rect.left;
-          left = Math.max(stopGradientRef.value.offsetWidth / 2, left);
-          left = Math.min(left, rect.width - stopGradientRef.value.offsetWidth / 2);
-
-          state.endColorStop = Math.round(
-            ((left - stopGradientRef.value.offsetWidth / 2) /
-              (rect.width - stopGradientRef.value.offsetWidth)) *
-              100
-          );
-
-          emit("update:endColorStop", state.endColorStop);
-          emit("endColorStopChange", state.endColorStop);
-        }
-      };
-
-      const onDegreeBlur = (evt: FocusEvent) => {
-        const target = evt.target as HTMLInputElement;
-        const degree = parseInt(target.value.replace("°", ""));
-        if (!isNaN(degree)) {
-          state.angle = degree % 360;
-        }
-        emit("update:angle", state.angle);
-        emit("angleChange", state.angle);
-      };
-
-      const onDegreeChange = (angle: number) => {
-        state.angle = angle;
-        emit("update:angle", state.angle);
-        emit("angleChange", state.angle);
-      };
-
-      const onCompactChange = (color: string) => {
-        if (color === "advance") {
-          advancePanelShow.value = true;
-          emit("advanceChange", true);
-        } else {
-          currentColor.value.hex = color;
-          emit("advanceChange", false);
-        }
-        doColorChange();
-      };
-
-      const onAlphaChange = (alpha: number) => {
-        currentColor.value.alpha = alpha;
-        doColorChange();
-      };
-
-      const onHueChange = (hue: number) => {
-        currentColor.value.hue = hue;
-        doColorChange();
-      };
-
-      const onBoardChange = (saturation: number, brightness: number) => {
-        currentColor.value.saturation = saturation;
-        currentColor.value.brightness = brightness;
-        doColorChange();
-      };
-
-      const onLightChange = (light: number) => {
-        currentColor.value.lightness = light;
-        doColorChange();
-      };
-
-      const onDisplayChange = () => {
-        doColorChange();
-      };
-
-      const doColorChange = () => {
+    const currentColor: any = computed({
+      get: () => {
+        return state.startActive ? state.startColor : state.endColor;
+      },
+      set: (v) => {
         if (state.startActive) {
-          emit("update:startColor", state.startColor);
-          emit("startColorChange", state.startColor);
-        } else {
-          emit("update:endColor", state.endColor);
-          emit("endColorChange", state.endColor);
+          state.startColor = v;
+          return;
         }
-      };
+        state.endColor = v;
+      },
+    });
 
-      const onBack = () => {
-        advancePanelShow.value = false;
+    const getStartColorLeft = computed(() => {
+      if (colorRangeRef.value && startGradientRef.value) {
+        const alpha = state.startColorStop / 100;
+        const rect = colorRangeRef.value.getBoundingClientRect();
+        const offsetWidth = startGradientRef.value.offsetWidth;
+
+        return Math.round(alpha * (rect.width - offsetWidth) + offsetWidth / 2);
+      }
+
+      return 0;
+    });
+
+    const getEndColorLeft = computed(() => {
+      if (colorRangeRef.value && stopGradientRef.value) {
+        const alpha = state.endColorStop / 100;
+        const rect = colorRangeRef.value.getBoundingClientRect();
+        const offsetWidth = stopGradientRef.value.offsetWidth;
+
+        return Math.round(alpha * (rect.width - offsetWidth) + offsetWidth / 2);
+      }
+
+      return 0;
+    });
+
+    const gradientBg = computed(() => {
+      let background = `background: linear-gradient(${state.angle}deg, ${state.startColorRgba} ${state.startColorStop}%, ${state.endColorRgba} ${state.endColorStop}%)`;
+      if (state.type === "radial") {
+        background = `background: radial-gradient(circle, ${state.startColorRgba} ${state.startColorStop}%, ${state.endColorRgba} ${state.endColorStop}%)`;
+      }
+      return background;
+    });
+
+    const dragStartRange = (evt: MouseEvent) => {
+      state.startActive = true;
+      if (colorRangeRef.value && startGradientRef.value) {
+        const rect = colorRangeRef.value?.getBoundingClientRect();
+
+        let left = evt.clientX - rect.left;
+        left = Math.max(startGradientRef.value.offsetWidth / 2, left);
+        left = Math.min(left, rect.width - startGradientRef.value.offsetWidth / 2);
+
+        state.startColorStop = Math.round(
+          ((left - startGradientRef.value.offsetWidth / 2) /
+            (rect.width - startGradientRef.value.offsetWidth)) *
+            100
+        );
+
+        emit("update:startColorStop", state.startColorStop);
+        emit("startColorStopChange", state.startColorStop);
+      }
+    };
+    const handleEleMouseMove = (e: MouseEvent) => {
+      if (!isSelectBoxMouseDown) return;
+      state.movePst.x = e.pageX - state.mouseStartPst.x;
+      state.movePst.y = e.pageY - state.mouseStartPst.y;
+      state.pageX = e.pageX;
+      state.pageY = e.pageY;
+      sliderMove();
+    };
+    const sliderMove = () => {
+      if (refColorBar.value) {
+        const barWidth = refColorBar.value.getBoundingClientRect().width;
+        let distRatio = ((state.startMovePst * barWidth) / 100 + state.movePst.x) / barWidth;
+        if (distRatio > 1) {
+          distRatio = 1;
+        } else if (distRatio < 0) {
+          distRatio = 0;
+        }
+        state.colors[state.selectIndex].pst = Math.round(distRatio * 100);
+      }
+    };
+    const handleEleMouseUp = (e: MouseEvent) => {
+      isSelectBoxMouseDown = false;
+      sliderDone();
+    };
+    const sliderDone = () => {
+      resetDraggle();
+    };
+    const resetDraggle = () => {
+      isSelectBoxMouseDown = false;
+      state.mouseStartPst = { x: 0, y: 0 };
+      state.movePst.x = 0;
+      state.movePst.y = 0;
+    };
+    const bindEventsDoc = () => {
+      useEventListener(document.body, "mousemove", handleEleMouseMove);
+      useEventListener(document.body, "mouseup", handleEleMouseUp);
+    };
+
+    const clickGColorPot = (index: Number) => {
+      if (state.selectIndex === index) return;
+      state.selectIndex = index;
+    };
+    const sliderStart = () => {
+      state.startMovePst = state.colors[state.selectIndex].pst;
+    };
+    const sliderPotDown = (index: Number, $event: MouseEvent) => {
+      bindEventsDoc();
+      const e: MouseEvent = $event;
+      clickGColorPot(index);
+      isSelectBoxMouseDown = true;
+      state.mouseStartPst.x = e.pageX;
+      state.mouseStartPst.y = e.pageY;
+      sliderStart();
+    };
+
+    const dragEndRange = (evt: MouseEvent) => {
+      state.startActive = false;
+
+      if (colorRangeRef.value && stopGradientRef.value) {
+        const rect = colorRangeRef.value?.getBoundingClientRect();
+
+        let left = evt.clientX - rect.left;
+        left = Math.max(stopGradientRef.value.offsetWidth / 2, left);
+        left = Math.min(left, rect.width - stopGradientRef.value.offsetWidth / 2);
+
+        state.endColorStop = Math.round(
+          ((left - stopGradientRef.value.offsetWidth / 2) /
+            (rect.width - stopGradientRef.value.offsetWidth)) *
+            100
+        );
+
+        emit("update:endColorStop", state.endColorStop);
+        emit("endColorStopChange", state.endColorStop);
+      }
+    };
+
+    const onDegreeBlur = (evt: FocusEvent) => {
+      const target = evt.target as HTMLInputElement;
+      const degree = parseInt(target.value.replace("°", ""));
+      if (!isNaN(degree)) {
+        state.angle = degree % 360;
+      }
+      emit("update:angle", state.angle);
+      emit("angleChange", state.angle);
+    };
+
+    const onDegreeChange = (angle: number) => {
+      state.angle = angle;
+      emit("update:angle", state.angle);
+      emit("angleChange", state.angle);
+    };
+
+    const onCompactChange = (color: string) => {
+      if (color === "advance") {
+        advancePanelShow.value = true;
+        emit("advanceChange", true);
+      } else {
+        currentColor.value.hex = color;
         emit("advanceChange", false);
-      };
+      }
+      doColorChange();
+    };
 
-      const onTypeChange = () => {
-        state.type = state.type === "linear" ? "radial" : "linear";
-        emit("typeChange", state.type);
-      };
+    const onAlphaChange = (alpha: number) => {
+      currentColor.value.alpha = alpha;
+      doColorChange();
+    };
 
-      const historyColors = useLocalStorage<string[]>(HistoryColorKey, [], {});
+    const onHueChange = (hue: number) => {
+      currentColor.value.hue = hue;
+      doColorChange();
+    };
 
-      const updateColorHistoryFn = useDebounceFn(() => {
-        if (props.disableHistory) {
-          return;
-        }
-        const rgbString = currentColor.value.toRgbString();
+    const onBoardChange = (saturation: number, brightness: number) => {
+      currentColor.value.saturation = saturation;
+      currentColor.value.brightness = brightness;
+      doColorChange();
+    };
 
-        historyColors.value = historyColors.value.filter((value) => {
-          return !tinycolor.equals(value, rgbString);
-        });
+    const onLightChange = (light: number) => {
+      currentColor.value.lightness = light;
+      doColorChange();
+    };
 
-        if (historyColors.value.includes(rgbString)) {
-          return;
-        }
+    const onDisplayChange = () => {
+      doColorChange();
+    };
 
-        while (historyColors.value.length > MAX_STORAGE_LENGTH) {
-          historyColors.value.pop();
-        }
+    const doColorChange = () => {
+      if (state.startActive) {
+        emit("update:startColor", state.startColor);
+        emit("startColorChange", state.startColor);
+      } else {
+        emit("update:endColor", state.endColor);
+        emit("endColorChange", state.endColor);
+      }
+    };
 
-        historyColors.value.unshift(rgbString);
-      }, 500);
+    const onBack = () => {
+      advancePanelShow.value = false;
+      emit("advanceChange", false);
+    };
 
-      tryOnMounted(() => {
-        if (stopGradientRef.value && startGradientRef.value) {
-          DOMUtils.triggerDragEvent(stopGradientRef.value, {
-            drag: (event: Event) => {
-              dragEndRange(event as MouseEvent);
-            },
-            end: (event: Event) => {
-              dragEndRange(event as MouseEvent);
-            },
-          });
-          DOMUtils.triggerDragEvent(startGradientRef.value, {
-            drag: (event: Event) => {
-              dragStartRange(event as MouseEvent);
-            },
-            end: (event: Event) => {
-              dragStartRange(event as MouseEvent);
-            },
-          });
-        }
+    const onTypeChange = () => {
+      state.type = state.type === "linear" ? "radial" : "linear";
+      emit("typeChange", state.type);
+    };
+
+    const historyColors = useLocalStorage<string[]>(HistoryColorKey, [], {});
+
+    const updateColorHistoryFn = useDebounceFn(() => {
+      if (props.disableHistory) {
+        return;
+      }
+      const rgbString = currentColor.value.toRgbString();
+
+      historyColors.value = historyColors.value.filter((value) => {
+        return !tinycolor.equals(value, rgbString);
       });
 
-      whenever(
-        () => state.startColor,
-        (value) => {
-          state.startColorRgba = value.toRgbString();
-        },
-        { deep: true }
-      );
+      if (historyColors.value.includes(rgbString)) {
+        return;
+      }
 
-      whenever(
-        () => state.endColor,
-        (value) => {
-          state.endColorRgba = value.toRgbString();
-        },
-        { deep: true }
-      );
+      while (historyColors.value.length > MAX_STORAGE_LENGTH) {
+        historyColors.value.pop();
+      }
 
-      whenever(
-        () => currentColor.value,
-        () => {
-          updateColorHistoryFn();
-        },
-        { deep: true }
-      );
+      historyColors.value.unshift(rgbString);
+    }, 500);
 
-      return {
-        startGradientRef,
-        stopGradientRef,
-        colorRangeRef,
-        state,
-        currentColor,
-        getStartColorLeft,
-        getEndColorLeft,
-        gradientBg,
-        advancePanelShow,
-        onDegreeBlur,
-        onCompactChange,
-        onAlphaChange,
-        onHueChange,
-        onBoardChange,
-        onLightChange,
-        historyColors,
-        onBack,
-        onDegreeChange,
-        onDisplayChange,
-        onTypeChange,
-        lang: parent?.lang,
-      };
-    },
-  });
+    tryOnMounted(() => {
+      if (stopGradientRef.value && startGradientRef.value) {
+        DOMUtils.triggerDragEvent(stopGradientRef.value, {
+          drag: (event: Event) => {
+            dragEndRange(event as MouseEvent);
+          },
+          end: (event: Event) => {
+            dragEndRange(event as MouseEvent);
+          },
+        });
+        DOMUtils.triggerDragEvent(startGradientRef.value, {
+          drag: (event: Event) => {
+            dragStartRange(event as MouseEvent);
+          },
+          end: (event: Event) => {
+            dragStartRange(event as MouseEvent);
+          },
+        });
+      }
+    });
+
+    whenever(
+      () => state.startColor,
+      (value) => {
+        state.startColorRgba = value.toRgbString();
+      },
+      { deep: true }
+    );
+
+    whenever(
+      () => state.endColor,
+      (value) => {
+        state.endColorRgba = value.toRgbString();
+      },
+      { deep: true }
+    );
+
+    whenever(
+      () => currentColor.value,
+      () => {
+        updateColorHistoryFn();
+      },
+      { deep: true }
+    );
+
+    return {
+      refColorBar,
+      startGradientRef,
+      stopGradientRef,
+      colorRangeRef,
+      state,
+      currentColor,
+      getStartColorLeft,
+      getEndColorLeft,
+      gradientBg,
+      advancePanelShow,
+      onDegreeBlur,
+      onCompactChange,
+      onAlphaChange,
+      onHueChange,
+      onBoardChange,
+      onLightChange,
+      historyColors,
+      onBack,
+      onDegreeChange,
+      onDisplayChange,
+      onTypeChange,
+      lang: parent?.lang,
+      sliderPotDown,
+      clickGColorPot,
+    };
+  },
+});
 </script>
 
 <style lang="scss" scoped>
-  .vc-gradient-picker {
-    position: relative;
+.vc-gradient-picker {
+  position: relative;
 
-    &__header {
-      margin-bottom: 20px;
-      z-index: 999;
-      text-align: left;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
+  &__header {
+    margin-bottom: 20px;
+    z-index: 999;
+    text-align: left;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
 
-      .back {
-        border: 2px solid rgba(150, 150, 150, 0.65);
-        border-width: 0 1px 1px 0;
-        display: inline-block;
-        padding: 4px;
-        margin-left: 2px;
-        transform: rotate(135deg);
+    .back {
+      border: 2px solid rgba(150, 150, 150, 0.65);
+      border-width: 0 1px 1px 0;
+      display: inline-block;
+      padding: 4px;
+      margin-left: 2px;
+      transform: rotate(135deg);
+    }
+  }
+
+  .vc-gradient__types {
+    display: flex;
+    background-color: rgba(200, 200, 200, 0.25);
+    border-radius: 4px;
+    overflow: hidden;
+
+    .vc-gradient__type {
+      padding: 4px 8px;
+      color: #666;
+      cursor: pointer;
+      font-size: 12px;
+
+      &.active {
+        color: #000;
+        background-color: rgba(200, 200, 200, 0.8);
       }
     }
+  }
 
-    .vc-gradient__types {
-      display: flex;
-      background-color: rgba(200, 200, 200, 0.25);
-      border-radius: 4px;
-      overflow: hidden;
+  &__body {
+    margin-bottom: 12px;
+    display: -ms-flexbox;
+    display: flex;
+    align-items: center;
 
-      .vc-gradient__type {
-        padding: 4px 8px;
-        color: #666;
-        cursor: pointer;
-        font-size: 12px;
+    .vc-color-range {
+      flex: 1;
 
-        &.active {
-          color: #000;
-          background-color: rgba(200, 200, 200, 0.8);
+      &__container {
+        position: relative;
+        height: 16px;
+        border-radius: 5px;
+
+        .vc-background {
+          height: 100%;
+          border-radius: 4px;
+          box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.06);
         }
-      }
-    }
 
-    &__body {
-      margin-bottom: 12px;
-      display: -ms-flexbox;
-      display: flex;
-      align-items: center;
+        .vc-gradient__stop__container {
+          position: absolute;
+          width: 100%;
+          top: 0;
+          height: 100%;
+          left: 8px;
+          width: calc(100% - 16px);
 
-      .vc-color-range {
-        flex: 1;
-
-        &__container {
-          position: relative;
-          height: 16px;
-          border-radius: 5px;
-
-          .vc-background {
-            height: 100%;
-            border-radius: 4px;
-            box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.06);
-          }
-
-          .vc-gradient__stop__container {
+          .vc-gradient__stop {
             position: absolute;
-            width: 100%;
-            top: 0;
-            height: 100%;
-            left: 0;
+            top: 50%;
+            width: 12px;
+            height: 16px;
+            overflow: hidden;
+            border: 2px solid #fff;
+            border-radius: 2px;
+            cursor: pointer;
+            box-shadow: 0 0 2px rgba(0, 0, 0, 0.35);
+            transform: translateY(-50%);
 
-            .vc-gradient__stop {
-              position: absolute;
-              top: -2px;
-              width: 14px;
-              height: 16px;
-              overflow: hidden;
-              border: 2px solid #fff;
-              border-radius: 2px;
-              cursor: pointer;
-              box-shadow: 0 0 2px rgba(0, 0, 0, 0.35);
-              box-sizing: content-box;
-              transform: translate(-9px, 0);
+            // transform: translate(-9px, 0);
 
-              &--inner {
-                display: inline-block;
-                height: 100%;
-              }
+            &--inner {
+              display: inline-block;
+              height: 100%;
+            }
 
-              &--current {
-                position: relative;
-                z-index: 1;
-                box-shadow: 0 0 4px 0 rgba(0, 0, 0, 0.2), 0 0 0 1.2px #2254f4;
-              }
+            &--current {
+              position: relative;
+              z-index: 1;
+              box-shadow: 0 0 4px 0 rgba(0, 0, 0, 0.2), 0 0 0 1.2px #2254f4;
             }
           }
         }
       }
+    }
 
-      .vc-degree-input {
-        position: relative;
-        z-index: 2;
-        font-size: 12px;
-        border-radius: 4px;
+    .vc-degree-input {
+      position: relative;
+      z-index: 2;
+      font-size: 12px;
+      border-radius: 4px;
 
-        &:hover {
-          .vc-degree-input__panel {
-            display: block;
-          }
+      &:hover {
+        .vc-degree-input__panel {
+          display: block;
         }
+      }
 
-        &__control {
-          width: 100%;
-          height: 100%;
+      &__control {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        border-radius: 4px;
+        background-color: rgba(200, 200, 200, 0.25);
+        color: #666;
+
+        input {
+          max-width: 28px;
+          text-align: center;
+          border: none;
+          outline: none;
+          background-color: transparent;
+          color: #666;
+          font-size: inherit;
+          overflow: visible;
+        }
+      }
+
+      &__panel {
+        display: none;
+        z-index: 10;
+
+        .vc-degree-input__disk {
+          width: 64px;
+          height: 64px;
+          background-color: #f1f1f1;
+          box-shadow: 0 0 2px rgba(0, 0, 0, 0.16), 0 1px 8px rgba(0, 0, 0, 0.06),
+            0 4px 12px rgba(0, 0, 0, 0.08);
+          border-radius: 4px;
           display: flex;
           justify-content: center;
           align-items: center;
-          border-radius: 4px;
-          background-color: rgba(200, 200, 200, 0.25);
-          color: #666;
-
-          input {
-            max-width: 28px;
-            text-align: center;
-            border: none;
-            outline: none;
-            background-color: transparent;
-            color: #666;
-            font-size: inherit;
-            overflow: visible;
-          }
+          position: relative;
+          transform: translate(0, 0);
         }
-
-        &__panel {
-          display: none;
-          z-index: 10;
-
-          .vc-degree-input__disk {
-            width: 64px;
-            height: 64px;
-            background-color: #f1f1f1;
-            box-shadow: 0 0 2px rgba(0, 0, 0, 0.16), 0 1px 8px rgba(0, 0, 0, 0.06),
-              0 4px 12px rgba(0, 0, 0, 0.08);
-            border-radius: 4px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            position: relative;
-            transform: translate(0, 0);
-          }
-        }
-      }
-
-      .vc-picker-degree-input {
-        margin-left: 8px;
-        width: 64px;
-        height: 28px;
       }
     }
+
+    .vc-picker-degree-input {
+      margin-left: 8px;
+      width: 64px;
+      height: 28px;
+    }
   }
+}
 </style>
