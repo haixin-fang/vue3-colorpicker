@@ -25,30 +25,8 @@
     <div class="vc-gradient-picker__body">
       <div class="vc-color-range" ref="colorRangeRef">
         <div class="vc-color-range__container" ref="refColorBar">
-          <div class="vc-background" :style="gradientBg"></div>
+          <div class="vc-background" :style="gradientBg" @click="handlePotBar"></div>
           <div class="vc-gradient__stop__container">
-            <!-- <div
-              class="vc-gradient__stop"
-              :class="{
-                'vc-gradient__stop--current': state.startActive,
-              }"
-              ref="startGradientRef"
-              :title="lang?.start"
-              :style="{ left: getStartColorLeft + 'px' }"
-            >
-              <span class="vc-gradient__stop--inner"></span>
-            </div>
-            <div
-              class="vc-gradient__stop"
-              :class="{
-                'vc-gradient__stop--current': !state.startActive,
-              }"
-              ref="stopGradientRef"
-              :title="lang?.end"
-              :style="{ left: getEndColorLeft + 'px' }"
-            >
-              <span class="vc-gradient__stop--inner"></span>
-            </div> -->
             <div
               class="vc-gradient__stop"
               v-for="(item, index) in colors"
@@ -101,9 +79,11 @@ import {
   useLocalStorage,
   whenever,
   useEventListener,
+  useCloned,
 } from "@vueuse/core";
 import { DOMUtils } from "@aesoper/normal-utils";
 import tinycolor from "tinycolor2";
+import ColorScale from "color-scales";
 
 import Alpha from "../common/Alpha.vue";
 import Palette from "../common/Palette.vue";
@@ -115,15 +95,34 @@ import Display from "../common/Display.vue";
 import { Color, HistoryColorKey, MAX_STORAGE_LENGTH } from "../utils/color";
 import { ColorPickerProvider, ColorPickerProviderKey } from "../utils/type";
 import Angle from "../angle/Angle";
+function cloneDeep(target: any) {
+  let result: any;
+  if (Array.isArray(target)) {
+    result = [];
+    target.forEach((item) => {
+      result.push(cloneDeep(item));
+    });
+  } else if (typeof target === "object" && target !== null) {
+    result = {};
+    for (const key in target) {
+      if (Object.hasOwnProperty.call(target, key)) {
+        result[key] = cloneDeep(target[key]);
+      }
+    }
+  } else {
+    result = target;
+  }
+  return result;
+}
 
+function keepDecimal(numStr: string, num = 2) {
+  const reg = new RegExp(`^\\d+(?:\\.\\d{0,${num}})?`, "g");
+  return !numStr.match(reg) ? "" : numStr.match(reg);
+}
 export default defineComponent({
   name: "GradientColorPicker",
   components: { Angle, Display, Alpha, Palette, Board, Hue, Lightness, History },
   props: {
-    startColor: propTypes.instanceOf(Color).isRequired,
-    endColor: propTypes.instanceOf(Color).isRequired,
-    startColorStop: propTypes.number.def(0),
-    endColorStop: propTypes.number.def(100),
     angle: propTypes.number.def(0),
     type: propTypes.oneOf(["linear", "radial"]).def("linear"),
     disableHistory: propTypes.bool.def(false),
@@ -137,29 +136,17 @@ export default defineComponent({
     "update:startColor",
     "update:endColor",
     "update:angle",
-    "update:startColorStop",
-    "update:endColorStop",
-    "startColorChange",
-    "endColorChange",
+    "gradientChange",
     "advanceChange",
     "angleChange",
-    "startColorStopChange",
-    "endColorStopChange",
     "typeChange",
   ],
   setup(props, { emit }) {
-    const state:any = reactive({
+    const state: any = reactive({
       startActive: true,
-      startColor: props.startColor,
-      endColor: props.endColor,
-      startColorStop: props.startColorStop,
-      endColorStop: props.endColorStop,
       angle: props.angle,
       type: props.type,
-
       // rgba
-      startColorRgba: props.startColor.toRgbString(),
-      endColorRgba: props.endColor.toRgbString(),
       colors: props.colors,
       colorStops: props.colorStops,
       selectIndex: 0,
@@ -179,7 +166,7 @@ export default defineComponent({
 
     const parent = inject<ColorPickerProvider>(ColorPickerProviderKey);
 
-    const advancePanelShow = ref(props.pickerType === "chrome");
+    const advancePanelShow = ref<boolean>(props.pickerType === "chrome");
 
     // Ref
     const startGradientRef = ref<HTMLElement>();
@@ -187,11 +174,9 @@ export default defineComponent({
     const colorRangeRef = ref<HTMLElement>();
     const refColorBar = ref<HTMLElement>();
     watch(
-      () => [props.startColor, props.endColor, props.angle],
+      () => [props.angle],
       (val: any[]) => {
-        state.startColor = val[0];
-        state.endColor = val[1];
-        state.angle = val[2];
+        state.angle = val[0];
       }
     );
 
@@ -204,68 +189,31 @@ export default defineComponent({
 
     const currentColor: any = computed({
       get: () => {
-        return state.startActive ? state.startColor : state.endColor;
+        // return state.startActive ? state.startColor : state.endColor;
+        return state.colors[state.selectIndex];
       },
       set: (v) => {
-        if (state.startActive) {
-          state.startColor = v;
-          return;
-        }
-        state.endColor = v;
+        // if (state.startActive) {
+        //   state.startColor = v;
+        //   return;
+        // }
+        // state.endColor = v;
+        state.colors[state.selectIndex] = v;
       },
-    });
-
-    const getStartColorLeft = computed(() => {
-      if (colorRangeRef.value && startGradientRef.value) {
-        const alpha = state.startColorStop / 100;
-        const rect = colorRangeRef.value.getBoundingClientRect();
-        const offsetWidth = startGradientRef.value.offsetWidth;
-
-        return Math.round(alpha * (rect.width - offsetWidth) + offsetWidth / 2);
-      }
-
-      return 0;
-    });
-
-    const getEndColorLeft = computed(() => {
-      if (colorRangeRef.value && stopGradientRef.value) {
-        const alpha = state.endColorStop / 100;
-        const rect = colorRangeRef.value.getBoundingClientRect();
-        const offsetWidth = stopGradientRef.value.offsetWidth;
-
-        return Math.round(alpha * (rect.width - offsetWidth) + offsetWidth / 2);
-      }
-
-      return 0;
     });
 
     const gradientBg = computed(() => {
-      let background = `background: linear-gradient(${state.angle}deg, ${state.startColorRgba} ${state.startColorStop}%, ${state.endColorRgba} ${state.endColorStop}%)`;
+      const colors = cloneDeep(state.colors)
+        .sort((a: any, b: any) => a.pst - b.pst)
+        .map((item: any) => {
+          return `${item.toRgbString()} ${keepDecimal(String(item.pst) || "", 5)}%`;
+        });
+      let background = `background:linear-gradient(${state.angle}deg, ${colors.join(",")})`;
       if (state.type === "radial") {
         background = `background: radial-gradient(circle, ${state.startColorRgba} ${state.startColorStop}%, ${state.endColorRgba} ${state.endColorStop}%)`;
       }
       return background;
     });
-
-    const dragStartRange = (evt: MouseEvent) => {
-      state.startActive = true;
-      if (colorRangeRef.value && startGradientRef.value) {
-        const rect = colorRangeRef.value?.getBoundingClientRect();
-
-        let left = evt.clientX - rect.left;
-        left = Math.max(startGradientRef.value.offsetWidth / 2, left);
-        left = Math.min(left, rect.width - startGradientRef.value.offsetWidth / 2);
-
-        state.startColorStop = Math.round(
-          ((left - startGradientRef.value.offsetWidth / 2) /
-            (rect.width - startGradientRef.value.offsetWidth)) *
-            100
-        );
-
-        emit("update:startColorStop", state.startColorStop);
-        emit("startColorStopChange", state.startColorStop);
-      }
-    };
     const handleEleMouseMove = (e: MouseEvent) => {
       if (!isSelectBoxMouseDown) return;
       state.movePst.x = e.pageX - state.mouseStartPst.x;
@@ -284,6 +232,7 @@ export default defineComponent({
           distRatio = 0;
         }
         state.colors[state.selectIndex].pst = Math.round(distRatio * 100);
+        emit("gradientChange", state.colors);
       }
     };
     const handleEleMouseUp = (e: MouseEvent) => {
@@ -321,24 +270,29 @@ export default defineComponent({
       sliderStart();
     };
 
-    const dragEndRange = (evt: MouseEvent) => {
-      state.startActive = false;
+    const handlePotBar = (e: MouseEvent) => {
+      if (refColorBar.value) {
+        const barBounding = refColorBar.value.getBoundingClientRect();
+        const barLeft = barBounding.left;
+        const colorPotDist = e.pageX - barLeft;
+        const value = cloneDeep(state.colors);
+        // 渐变条stopColors;
+        const rangColors = value
+          .sort((a: any, b: any) => a.pst - b.pst)
+          .map((item: any) => {
+            return item.toHexString();
+          });
 
-      if (colorRangeRef.value && stopGradientRef.value) {
-        const rect = colorRangeRef.value?.getBoundingClientRect();
-
-        let left = evt.clientX - rect.left;
-        left = Math.max(stopGradientRef.value.offsetWidth / 2, left);
-        left = Math.min(left, rect.width - stopGradientRef.value.offsetWidth / 2);
-
-        state.endColorStop = Math.round(
-          ((left - stopGradientRef.value.offsetWidth / 2) /
-            (rect.width - stopGradientRef.value.offsetWidth)) *
-            100
-        );
-
-        emit("update:endColorStop", state.endColorStop);
-        emit("endColorStopChange", state.endColorStop);
+        // 初始化色条Range，用来取渐变色值
+        const colorScale = new ColorScale(0, barBounding.width, rangColors);
+        const colorPotHex = colorScale.getColor(colorPotDist).toHexString();
+        const colorPotPst = (100 * colorPotDist) / barBounding.width;
+        const addPot = new Color(colorPotHex);
+        addPot.pst = colorPotPst;
+        state.colors.push(addPot);
+        // 增加后默认选中
+        state.selectIndex = state.colors.length - 1;
+        emit("gradientChange", state.colors);
       }
     };
 
@@ -395,13 +349,7 @@ export default defineComponent({
     };
 
     const doColorChange = () => {
-      if (state.startActive) {
-        emit("update:startColor", state.startColor);
-        emit("startColorChange", state.startColor);
-      } else {
-        emit("update:endColor", state.endColor);
-        emit("endColorChange", state.endColor);
-      }
+      emit("gradientChange", state.colors);
     };
 
     const onBack = () => {
@@ -435,44 +383,7 @@ export default defineComponent({
       }
 
       historyColors.value.unshift(rgbString);
-    }, 500);
-
-    tryOnMounted(() => {
-      if (stopGradientRef.value && startGradientRef.value) {
-        DOMUtils.triggerDragEvent(stopGradientRef.value, {
-          drag: (event: Event) => {
-            dragEndRange(event as MouseEvent);
-          },
-          end: (event: Event) => {
-            dragEndRange(event as MouseEvent);
-          },
-        });
-        DOMUtils.triggerDragEvent(startGradientRef.value, {
-          drag: (event: Event) => {
-            dragStartRange(event as MouseEvent);
-          },
-          end: (event: Event) => {
-            dragStartRange(event as MouseEvent);
-          },
-        });
-      }
-    });
-
-    whenever(
-      () => state.startColor,
-      (value) => {
-        state.startColorRgba = value.toRgbString();
-      },
-      { deep: true }
-    );
-
-    whenever(
-      () => state.endColor,
-      (value) => {
-        state.endColorRgba = value.toRgbString();
-      },
-      { deep: true }
-    );
+    }, 100);
 
     whenever(
       () => currentColor.value,
@@ -483,14 +394,13 @@ export default defineComponent({
     );
 
     return {
+      handlePotBar,
       refColorBar,
       startGradientRef,
       stopGradientRef,
       colorRangeRef,
       state,
       currentColor,
-      getStartColorLeft,
-      getEndColorLeft,
       gradientBg,
       advancePanelShow,
       onDegreeBlur,
@@ -566,7 +476,8 @@ export default defineComponent({
         position: relative;
         height: 16px;
         border-radius: 5px;
-
+        background: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAgAAAAICAYAAADED76LAAAAJ0lEQVQoU2M8c/X2fwYkYKylgsxlYKSDgv///6O44ey1O6huoL0CAJgaKeXe+C99AAAAAElFTkSuQmCC)
+          repeat;
         .vc-background {
           height: 100%;
           border-radius: 4px;
@@ -580,6 +491,7 @@ export default defineComponent({
           height: 100%;
           left: 8px;
           width: calc(100% - 16px);
+          pointer-events: none;
 
           .vc-gradient__stop {
             position: absolute;
@@ -592,7 +504,7 @@ export default defineComponent({
             cursor: pointer;
             box-shadow: 0 0 2px rgba(0, 0, 0, 0.35);
             transform: translateY(-50%);
-
+            pointer-events: initial;
             // transform: translate(-9px, 0);
 
             &--inner {

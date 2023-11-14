@@ -34,6 +34,8 @@ export class Color {
   private hslSaturationValue = 0;
   private lightnessValue = 0;
 
+  public pst = 0;
+
   constructor(input?: ColorInput) {
     this.instance = tinycolor(input);
 

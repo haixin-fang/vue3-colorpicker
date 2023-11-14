@@ -11,6 +11,10 @@ const Vue3ColorPicker: Plugin = {
   },
 };
 
+export { Color } from "./utils/color";
+
+export type { ColorFormat } from "./utils/color";
+
 export { ColorPicker, type ColorPickerProps };
 
 export default Vue3ColorPicker;

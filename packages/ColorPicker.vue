@@ -39,7 +39,7 @@
 import { computed, defineComponent, ExtractPropTypes, PropType, provide, reactive, ref } from "vue";
 import { onClickOutside, tryOnMounted, whenever, useDebounceFn } from "@vueuse/core";
 import tinycolor, { ColorInputWithoutInstance } from "tinycolor2";
-import { ColorStop, GradientNode, parse, stringify } from "gradient-parser";
+import { GradientNode, parse, stringify } from "gradient-parser";
 import { createPopper, Instance } from "@popperjs/core";
 import propTypes from "vue-types";
 
@@ -101,6 +101,8 @@ export default defineComponent({
     "gradientColorChange",
     "update:activeKey",
     "activeKeyChange",
+    "update:gradientData",
+    "gradientDataChange",
   ],
   setup(props, { emit }) {
     provide<ColorPickerProvider>(ColorPickerProviderKey, {
@@ -116,7 +118,7 @@ export default defineComponent({
     const startColor = new Color("#000");
     const endColor = new Color("#000");
     const colorList = new Color("#000");
-    const instance = new Color(state.pureColor);
+    const instance: any = new Color(state.pureColor);
 
     const gradientState = reactive<any>({
       startColor,
@@ -138,7 +140,6 @@ export default defineComponent({
     let popperInstance: Instance | null = null;
 
     const getBgColorStyle = computed(() => {
-      debugger;
       const bgColor =
         state.activeKey !== "gradient"
           ? tinycolor(state.pureColor).toRgbString()
@@ -161,7 +162,7 @@ export default defineComponent({
     };
 
     const getBindArgs = computed(() => {
-      const commonProps = {
+      const commonProps: any = {
         disableAlpha: props.disableAlpha,
         disableHistory: props.disableHistory,
         roundHistory: props.roundHistory,
@@ -171,35 +172,19 @@ export default defineComponent({
       if (state.activeKey === "gradient") {
         return {
           ...commonProps,
-          startColor: gradientState.startColor,
-          endColor: gradientState.endColor,
           angle: gradientState.angle,
           type: gradientState.type,
-          startColorStop: gradientState.startColorStop,
-          endColorStop: gradientState.endColorStop,
           colors: gradientState.colors,
-          onStartColorChange: (v: Color) => {
-            gradientState.startColor = v;
-            onGradientChange();
-          },
-          onEndColorChange: (v: Color) => {
-            gradientState.endColor = v;
-            onGradientChange();
-          },
-          onStartColorStopChange: (v: number) => {
-            gradientState.startColorStop = v;
-            onGradientChange();
-          },
-          onEndColorStopChange: (v: number) => {
-            gradientState.endColorStop = v;
-            onGradientChange();
-          },
           onAngleChange: (v: number) => {
             gradientState.angle = v;
             onGradientChange();
           },
           onTypeChange: (type: string) => {
             gradientState.type = type;
+            onGradientChange();
+          },
+          onGradientChange: (v: Color[]) => {
+            gradientState.colors = v;
             onGradientChange();
           },
           onAdvanceChange: onAdvanceChange,
@@ -233,11 +218,9 @@ export default defineComponent({
     const parseGradientColor = () => {
       try {
         const [colorNode] = parse(gradientState.gradientColor);
-        debugger;
 
         if (colorNode && colorNode.type.includes("gradient") && colorNode.colorStops.length >= 2) {
           colorNode.colorStops.forEach((item, index) => {
-            debugger;
             const value = Number(item.length?.value) || 0;
             const [r, g, b, a] = item.value;
             gradientState.colors[index] = new Color({
@@ -253,28 +236,11 @@ export default defineComponent({
 
           gradientState.startColorStop = Number(startColorVal.length?.value) || 0;
           gradientState.endColorStop = Number(endColorVal.length?.value) || 0;
-
           if (colorNode.type === "linear-gradient" && colorNode.orientation?.type === "angular") {
             gradientState.angle = Number(colorNode.orientation?.value) || 0;
           }
 
           gradientState.type = colorNode.type.split("-")[0];
-
-          const [r, g, b, a] = startColorVal.value;
-          const [r1, g1, b1, a1] = endColorVal.value;
-
-          gradientState.startColor = new Color({
-            r: Number(r),
-            g: Number(g),
-            b: Number(b),
-            a: Number(a),
-          });
-          gradientState.endColor = new Color({
-            r: Number(r1),
-            g: Number(g1),
-            b: Number(b1),
-            a: Number(a1),
-          });
         }
       } catch (e) {
         console.log(`[Parse Color]: ${e}`);
@@ -288,6 +254,10 @@ export default defineComponent({
 
         emit("update:gradientColor", gradientState.gradientColor);
         emit("gradientColorChange", gradientState.gradientColor);
+        const gradientData: any = nodes[0];
+        gradientData.gradientColor = gradientState.gradientColor;
+        emit("gradientDataChange", gradientData);
+        emit("update:gradientData", gradientData);
       } catch (e) {
         console.log(e);
       }
@@ -295,33 +265,26 @@ export default defineComponent({
 
     const color2GradientNode = () => {
       const nodes: GradientNode[] = [];
-      const startColorArr = gradientState.startColor.RGB.map((v) => v.toString());
-      const endColorArr = gradientState.endColor.RGB.map((v) => v.toString());
-
-      const colorStops: ColorStop[] = [
-        {
+      const colors = gradientState.colors.map((item: any) => {
+        const rgb = item.RGB.map((v: number) => v.toString());
+        return {
           type: "rgba",
-          value: [startColorArr[0], startColorArr[1], startColorArr[2], startColorArr[3]],
-          length: { value: gradientState.startColorStop + "", type: "%" },
-        },
-        {
-          type: "rgba",
-          value: [endColorArr[0], endColorArr[1], endColorArr[2], endColorArr[3]],
-          length: { value: gradientState.endColorStop + "", type: "%" },
-        },
-      ];
+          value: rgb,
+          length: { value: item.pst + "", type: "%" },
+        };
+      });
 
       if (gradientState.type === "linear") {
         nodes.push({
           type: "linear-gradient",
           orientation: { type: "angular", value: gradientState.angle + "" },
-          colorStops: colorStops,
+          colorStops: colors,
         });
       } else if (gradientState.type === "radial") {
         nodes.push({
           type: "radial-gradient",
           orientation: [{ type: "shape", value: "circle" }],
-          colorStops: colorStops,
+          colorStops: colors,
         });
       }
 

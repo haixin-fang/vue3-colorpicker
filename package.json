@@ -33,6 +33,7 @@
     "@aesoper/normal-utils": "^0.1.5",
     "@popperjs/core": "^2.11.8",
     "@vueuse/core": "^10.1.2",
+    "color-scales": "^3.0.2",
     "gradient-parser": "^1.0.2",
     "lodash-es": "^4.17.21",
     "tinycolor2": "^1.4.2",
