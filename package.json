@@ -1,17 +1,17 @@
 {
-  "name": "vue3-colorpicker",
-  "version": "2.2.2",
+  "name": "vue3-color-picker",
+  "version": "1.0.0",
   "main": "dist/index.es.js",
   "types": "dist/types/index.d.ts",
   "author": "aesoper",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/aesoper101/vue3-colorpicker/issues"
+    "url": "https://github.com/haixin-fang/vue3-color-picker/issues"
   },
   "files": [
     "dist"
   ],
-  "homepage": "https://github.com/aesoper101/vue3-colorpicker#readme",
+  "homepage": "https://github.com/haixin-fang/vue3-color-picker#readme",
   "scripts": {
     "dev": "vite",
     "build": "rimraf dist && vue-tsc --noEmit && vite build",
@@ -22,8 +22,8 @@
     "prepare": "husky install",
     "clean:dist": "rimraf dist",
     "pub": "cd dist && npm publish --registry=https://registry.npmjs.org --access public && cd ..",
-    "unpub": "npm unpublish vue3-colorpicker --force --registry=https://registry.npmjs.org",
-    "prelink": "cd dist && yarn link && cd .. && yarn link vue3-colorpicker",
+    "unpub": "npm unpublish vue3-color-picker --force --registry=https://registry.npmjs.org",
+    "prelink": "cd dist && yarn link && cd .. && yarn link vue3-color-picker",
     "deploy": "gh-pages -d storybook-static",
     "storybook": "storybook dev",
     "build-storybook": "rimraf storybook-static && storybook build",

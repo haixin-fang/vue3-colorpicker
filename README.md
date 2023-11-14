@@ -4,22 +4,22 @@ A very beautiful color picker, supports input and output of multiple color forma
 
 Note: This document is for Vue3ColorPicker v2. If you are looking for an older versions, refer to the v1 branches.The v2 version is a destructive update, and some functions in v1 are no longer supported. Please use it with caution
 
-[Live Demo](https://aesoper101.github.io/vue3-colorpicker/)
+[Live Demo](https://github.com/haixin-fang/vue3-color-picker/)
 
-[中文文档](https://github.com/aesoper101/vue3-colorpicker/blob/main/README.ZH-cn.md)
+[中文文档](https://github.com/haixin-fang/vue3-color-picker/blob/main/README.ZH-cn.md)
 
-![Vue3-colorpicker](src/assets/example.jpg)
+![vue3-color-picker](src/assets/example.jpg)
 
 ## Installation
 
 ```
-yarn add vue3-colorpicker
+yarn add vue3-color-picker
 ```
 
 OR
 
 ```
-npm install vue3-colorpicker
+npm install vue3-color-picker
 ```
 
 ## How to use
@@ -27,8 +27,8 @@ npm install vue3-colorpicker
 ### The first step is global registration
 
 ```
-import Vue3ColorPicker from "vue3-colorpicker";
-import "vue3-colorpicker/style.css";
+import Vue3ColorPicker from "vue3-color-picker";
+import "vue3-color-picker/style.css";
 
 createApp(App)
   .use(router)
@@ -39,8 +39,8 @@ createApp(App)
 OR
 
 ```vue3
-import { ColorPicker } from "vue3-colorpicker";
-import "vue3-colorpicker/style.css";
+import { ColorPicker } from "vue3-color-picker";
+import "vue3-color-picker/style.css";
 
 export default defineComponent({
 components: { ColorPicker },
@@ -71,4 +71,4 @@ components: { ColorPicker },
 
 ```
 
-[Live Demo](https://aesoper101.github.io/vue3-colorpicker/)
+[Live Demo](https://aesoper101.github.io/vue3-color-picker/)
