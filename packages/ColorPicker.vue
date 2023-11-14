@@ -60,9 +60,7 @@ const colorPickerProps = {
     type: [String, Object] as PropType<ColorInputWithoutInstance>,
     default: "#000000",
   },
-  gradientColor: propTypes.string.def(
-    "linear-gradient(90deg, rgba(255, 255, 255, 1) 0%, rgba(0, 0, 0, 1) 100%)"
-  ),
+  gradientColor: propTypes.string.def(""),
   format: {
     type: String as PropType<ColorFormat>,
     default: "rgb",
@@ -83,6 +81,7 @@ const colorPickerProps = {
   },
   debounce: propTypes.number.def(100),
   theme: propTypes.oneOf(["white", "black"]).def("white"),
+  gradientData: propTypes.object.def({}),
 };
 
 type ColorPickerProps = Partial<ExtractPropTypes<typeof colorPickerProps>>;
@@ -119,7 +118,6 @@ export default defineComponent({
     const endColor = new Color("#000");
     const colorList = new Color("#000");
     const instance: any = new Color(state.pureColor);
-
     const gradientState = reactive<any>({
       startColor,
       endColor,
@@ -130,6 +128,14 @@ export default defineComponent({
       type: "linear",
       gradientColor: props.gradientColor,
     });
+    if (!props.gradientColor && props.gradientData && props.gradientData.gradientColor) {
+      gradientState.gradientColor =
+        props.gradientData.gradientColor ||
+        "linear-gradient(90deg, rgba(255, 255, 255, 1) 0%, rgba(0, 0, 0, 1) 100%)";
+    } else if (!props.gradientColor) {
+      gradientState.gradientColor =
+        "linear-gradient(90deg, rgba(255, 255, 255, 1) 0%, rgba(0, 0, 0, 1) 100%)";
+    }
 
     // Ref
     const colorInstance = ref(instance);
