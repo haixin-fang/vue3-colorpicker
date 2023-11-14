@@ -1,7 +1,7 @@
 <template>
   <div class="vc-gradient-picker">
     <div class="vc-gradient-picker__header">
-      <div>
+      <div >
         <div
           v-show="pickerType === 'fk' && advancePanelShow"
           class="back"
@@ -10,11 +10,11 @@
         ></div>
       </div>
 
-      <div class="vc-gradient__types">
+      <div class="vc-gradient__types" v-if="getGradientTypes.length == 2">
         <div
           class="vc-gradient__type"
           :class="{ active: state.type === typeItem }"
-          v-for="typeItem in ['linear', 'radial']"
+          v-for="typeItem in getGradientTypes"
           :key="typeItem"
           @click="onTypeChange"
         >
@@ -131,6 +131,7 @@ export default defineComponent({
     pickerType: propTypes.oneOf(["fk", "chrome"]).def("fk"),
     colors: propTypes.array.def([]),
     colorStops: propTypes.array.def([]),
+    gradientType: propTypes.oneOf(["both", "liner", "radial"]).def("both"),
   },
   emits: [
     "update:startColor",
@@ -143,9 +144,8 @@ export default defineComponent({
   ],
   setup(props, { emit }) {
     const state: any = reactive({
-      startActive: true,
       angle: props.angle,
-      type: props.type,
+      type: props.gradientType == "both" ? props.type : props.gradientType,
       // rgba
       colors: props.colors,
       colorStops: props.colorStops,
@@ -189,15 +189,9 @@ export default defineComponent({
 
     const currentColor: any = computed({
       get: () => {
-        // return state.startActive ? state.startColor : state.endColor;
         return state.colors[state.selectIndex];
       },
       set: (v) => {
-        // if (state.startActive) {
-        //   state.startColor = v;
-        //   return;
-        // }
-        // state.endColor = v;
         state.colors[state.selectIndex] = v;
       },
     });
@@ -214,6 +208,14 @@ export default defineComponent({
       }
       return background;
     });
+
+    const getGradientTypes = computed(() => {
+      if (props.gradientType == "both") {
+        return ["linear", "radial"];
+      }
+      return [];
+    });
+
     const handleEleMouseMove = (e: MouseEvent) => {
       if (!isSelectBoxMouseDown) return;
       state.movePst.x = e.pageX - state.mouseStartPst.x;
@@ -417,6 +419,7 @@ export default defineComponent({
       lang: parent?.lang,
       sliderPotDown,
       clickGColorPot,
+      getGradientTypes,
     };
   },
 });
@@ -427,7 +430,6 @@ export default defineComponent({
   position: relative;
 
   &__header {
-    margin-bottom: 20px;
     z-index: 999;
     text-align: left;
     display: flex;
@@ -441,6 +443,7 @@ export default defineComponent({
       padding: 4px;
       margin-left: 2px;
       transform: rotate(135deg);
+      margin-bottom: 20px;
     }
   }
 

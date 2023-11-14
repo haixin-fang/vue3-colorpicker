@@ -158,6 +158,17 @@ export default {
       control: "text",
       description: "Get gradient details",
     },
+    gradientType: {
+      type: "string",
+      description: "linear | radial | both",
+      control: { type: "select" },
+      options: ["radial", "linear", "both"],
+      table: {
+        defaultValue: {
+          summary: "both",
+        },
+      },
+    },
   } as Partial<ArgTypes<ColorPickerProps>>,
 } as Meta;
 

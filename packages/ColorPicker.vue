@@ -82,6 +82,7 @@ const colorPickerProps = {
   debounce: propTypes.number.def(100),
   theme: propTypes.oneOf(["white", "black"]).def("white"),
   gradientData: propTypes.object.def({}),
+  gradientType: propTypes.oneOf(["both", "liner", "radial"]).def("both"),
 };
 
 type ColorPickerProps = Partial<ExtractPropTypes<typeof colorPickerProps>>;
@@ -181,6 +182,7 @@ export default defineComponent({
           angle: gradientState.angle,
           type: gradientState.type,
           colors: gradientState.colors,
+          gradientType: props.gradientType,
           onAngleChange: (v: number) => {
             gradientState.angle = v;
             onGradientChange();

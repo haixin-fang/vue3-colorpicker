@@ -47,6 +47,7 @@
           v-model:activeKey="activeKey"
           v-model:gradientData="gradientData"
           @gradientDataChange="gradientDataChange"
+          gradientType="linear"
         />
         <h3>useType: gradient </h3>
         <h3>
