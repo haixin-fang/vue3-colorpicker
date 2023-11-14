@@ -1,6 +1,6 @@
 {
   "name": "starfish-colorpicker",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "main": "index.es.js",
   "types": "types/index.d.ts",
   "author": "haixin-fang",
@@ -12,7 +12,6 @@
   "dependencies": {
     "@aesoper/normal-utils": "^0.1.5",
     "@popperjs/core": "^2.11.8",
-    "@types/webpack-env": "^1.18.4",
     "@vueuse/core": "^10.1.2",
     "color-scales": "^3.0.2",
     "gradient-parser": "^1.0.2",
