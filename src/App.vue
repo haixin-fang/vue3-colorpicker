@@ -40,7 +40,7 @@
 
       <div>
         <ColorPicker
-          useType="gradient"
+          useType="both"
           v-model:gradientColor="gradientColor"
           :disableHistory="true"
           is-widget

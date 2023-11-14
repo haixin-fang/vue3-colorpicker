@@ -1,5 +1,5 @@
 {
-  "name": "vue3-color-picker",
+  "name": "starfish-colorpicker",
   "version": "1.0.0",
   "main": "dist/index.es.js",
   "types": "dist/types/index.d.ts",
@@ -14,7 +14,7 @@
   "homepage": "https://github.com/haixin-fang/vue3-color-picker#readme",
   "scripts": {
     "dev": "vite",
-    "build": "rimraf dist && vue-tsc --noEmit && vite build",
+    "build": "rimraf dist  && vite build",
     "build:lib": "rimraf dist && vite build --config ./vite.config.lib.ts",
     "serve": "vite preview",
     "lint:lint-staged": "lint-staged -c ./.husky/lintstagedrc.js",
@@ -22,7 +22,7 @@
     "prepare": "husky install",
     "clean:dist": "rimraf dist",
     "pub": "cd dist && npm publish --registry=https://registry.npmjs.org --access public && cd ..",
-    "unpub": "npm unpublish vue3-color-picker --force --registry=https://registry.npmjs.org",
+    "unpub": "npm unpublish starfish-colorpicker --force --registry=https://registry.npmjs.org",
     "prelink": "cd dist && yarn link && cd .. && yarn link vue3-color-picker",
     "deploy": "gh-pages -d storybook-static",
     "storybook": "storybook dev",
@@ -32,6 +32,7 @@
   "dependencies": {
     "@aesoper/normal-utils": "^0.1.5",
     "@popperjs/core": "^2.11.8",
+    "@types/webpack-env": "^1.18.4",
     "@vueuse/core": "^10.1.2",
     "color-scales": "^3.0.2",
     "gradient-parser": "^1.0.2",

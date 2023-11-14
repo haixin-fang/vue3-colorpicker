@@ -1,21 +1,24 @@
 {
-  "name": "vue3-colorpicker",
-  "version": "2.2.2",
+  "name": "starfish-colorpicker",
+  "version": "1.0.0",
   "main": "index.es.js",
   "types": "types/index.d.ts",
-  "author": "aesoper",
+  "author": "haixin-fang",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/aesoper101/vue3-colorpicker/issues"
+    "url": "https://github.com/haixin-fang/vue3-color-picker/issues"
   },
-  "homepage": "https://github.com/aesoper101/vue3-colorpicker#readme",
+  "homepage": "https://github.com/haixin-fang/vue3-color-picker#readme",
   "dependencies": {
     "@aesoper/normal-utils": "^0.1.5",
     "@popperjs/core": "^2.11.8",
+    "@types/webpack-env": "^1.18.4",
     "@vueuse/core": "^10.1.2",
+    "color-scales": "^3.0.2",
     "gradient-parser": "^1.0.2",
     "lodash-es": "^4.17.21",
     "tinycolor2": "^1.4.2",
+    "vue": "^3.3.4",
     "vue-types": "^4.1.0"
   },
   "peerDependencies": {
