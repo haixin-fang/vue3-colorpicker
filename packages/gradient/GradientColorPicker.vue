@@ -210,7 +210,7 @@ export default defineComponent({
         });
       let background = `background:linear-gradient(${state.angle}deg, ${colors.join(",")})`;
       if (state.type === "radial") {
-        background = `background: radial-gradient(circle, ${state.startColorRgba} ${state.startColorStop}%, ${state.endColorRgba} ${state.endColorStop}%)`;
+        background = `background: radial-gradient(circle,  ${colors.join(",")})`;
       }
       return background;
     });

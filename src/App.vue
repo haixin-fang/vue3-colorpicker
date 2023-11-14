@@ -52,7 +52,7 @@
         <h3>
           {{ gradientColor }}
         </h3>
-        {{ gradientData }}
+        <!-- {{ gradientData }} -->
       </div>
     </div>
   </div>
