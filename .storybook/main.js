@@ -19,7 +19,14 @@ module.exports = {
     return config;
   },
   stories: ["../src/**/*.stories.mdx", "../src/**/*.stories.@(js|jsx|ts|tsx)"],
-  addons: ["@storybook/addon-links", "@storybook/addon-docs", "@storybook/addon-essentials"],
+  addons: ["@storybook/addon-links", {
+    name: "@storybook/addon-docs",
+    options: {
+      sourceLoaderOptions: {
+        injectStoryParameters: false
+      }
+    }
+  }, "@storybook/addon-essentials"],
   framework: {
     name: "@storybook/vue3-vite",
     options: {}
