@@ -2,22 +2,22 @@
 
 A very beautiful color picker, supports input and output of multiple color formats, and supports gradient color selection.
 
-[Live Demo](https://github.com/haixin-fang/vue3-color-picker/)
+[Live Demo](https://github.com/haixin-fang/colorpickers/)
 
-[中文文档](https://github.com/haixin-fang/vue3-color-picker/blob/main/README.ZH-cn.md)
+[中文文档](https://github.com/haixin-fang/colorpickers/blob/main/README.ZH-cn.md)
 
-![vue3-color-picker](src/assets/example.jpg)
+![colorpickers](src/assets/example.jpg)
 
 ## Installation
 
 ```
-yarn add starfish-colorpicker
+yarn add colorpickers
 ```
 
 OR
 
 ```
-npm install starfish-colorpicker
+npm install colorpickers
 ```
 
 ## How to use
@@ -25,20 +25,20 @@ npm install starfish-colorpicker
 ### The first step is global registration
 
 ```
-import Vue3ColorPicker from "starfish-colorpicker";
-import "starfish-colorpicker/style.css";
+import ColorPickers from "colorpickers";
+import "colorpickers/style.css";
 
 createApp(App)
   .use(router)
-  .use(Vue3ColorPicker)
+  .use(ColorPickers)
   .mount("#app");
 ```
 
 OR
 
 ```vue3
-import { ColorPicker } from "starfish-colorpicker";
-import "starfish-colorpicker/style.css";
+import { ColorPicker } from "colorpickers";
+import "colorpickers/style.css";
 
 export default defineComponent({
 components: { ColorPicker },
@@ -70,4 +70,4 @@ components: { ColorPicker },
 
 ```
 
-[Live Demo](https://haixin-fang.github.io/vue3-color-picker/)
+[Live Demo](https://haixin-fang.github.io/colorpickers/)

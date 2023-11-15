@@ -2,20 +2,20 @@
 
 非常漂亮的一款拾色器,支持多种颜色格式的输入输出,支持多点渐变色选择。
 
-[在线 demo 演示](https://haixin-fang.github.io/vue3-color-picker/)
+[在线 demo 演示](https://haixin-fang.github.io/colorpickers/)
 
-[English](https://github.com/haixin-fang/vue3-color-picker/blob/main/README.md)
+[English](https://github.com/haixin-fang/colorpickers/blob/main/README.md)
 
 ## 安装
 
 ```
-yarn add vue3-color-picker
+yarn add colorpickers
 ```
 
 或者
 
 ```
-npm install vue3-color-picker
+npm install colorpickers
 ```
 
 ## 如何使用
@@ -23,20 +23,20 @@ npm install vue3-color-picker
 ### 第一步全局注册
 
 ```
-import Vue3ColorPicker from "vue3-color-picker";
-import "vue3-color-picker/style.css";
+import ColorPickers from "colorpickers";
+import "colorpickers/style.css";
 
 createApp(App)
   .use(router)
-  .use(Vue3ColorPicker)
+  .use(ColorPickers)
   .mount("#app");
 ```
 
 或者局部注册
 
 ```vue3
-import { ColorPicker } from "vue3-color-picker";
-import "vue3-color-picker/style.css";
+import { ColorPicker } from "colorpickers";
+import "colorpickers/style.css";
 
 export default defineComponent({
 components: { ColorPicker },
@@ -67,6 +67,6 @@ components: { ColorPicker },
 </script>
 ```
 
-具体文档请参考 [在线 demo 演示](https://haixin-fang.github.io/vue3-color-picker/)
+具体文档请参考 [在线 demo 演示](https://haixin-fang.github.io/colorpickers/)
 
 案例代码在 src/stories 目录下

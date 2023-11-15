@@ -1,17 +1,17 @@
 {
-  "name": "starfish-colorpicker",
+  "name": "colorpickers",
   "version": "1.0.0",
   "main": "dist/index.es.js",
   "types": "dist/types/index.d.ts",
   "author": "aesoper",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/haixin-fang/vue3-color-picker/issues"
+    "url": "https://github.com/haixin-fang/colorpickers/issues"
   },
   "files": [
     "dist"
   ],
-  "homepage": "https://github.com/haixin-fang/vue3-color-picker#readme",
+  "homepage": "https://github.com/haixin-fang/colorpickers#readme",
   "scripts": {
     "dev": "vite",
     "build": "rimraf dist  && vite build",
@@ -22,8 +22,8 @@
     "prepare": "husky install",
     "clean:dist": "rimraf dist",
     "pub": "cd dist && npm publish --registry=https://registry.npmjs.org --access public && cd ..",
-    "unpub": "npm unpublish starfish-colorpicker --force --registry=https://registry.npmjs.org",
-    "prelink": "cd dist && yarn link && cd .. && yarn link vue3-color-picker",
+    "unpub": "npm unpublish colorpickers --force --registry=https://registry.npmjs.org",
+    "prelink": "cd dist && yarn link && cd .. && yarn link colorpickers",
     "deploy": "gh-pages -d storybook-static",
     "storybook": "storybook dev",
     "build-storybook": "rimraf storybook-static && storybook build",

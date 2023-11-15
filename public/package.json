@@ -1,14 +1,14 @@
 {
-  "name": "starfish-colorpicker",
-  "version": "1.0.1",
+  "name": "colorpickers",
+  "version": "1.0.0",
   "main": "index.es.js",
   "types": "types/index.d.ts",
   "author": "haixin-fang",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/haixin-fang/vue3-color-picker/issues"
+    "url": "https://github.com/haixin-fang/colorpickers/issues"
   },
-  "homepage": "https://github.com/haixin-fang/vue3-color-picker#readme",
+  "homepage": "https://github.com/haixin-fang/colorpickers#readme",
   "dependencies": {
     "@aesoper/normal-utils": "^0.1.5",
     "@popperjs/core": "^2.11.8",

@@ -6,4 +6,4 @@ export interface ColorPickerProvider {
   lang: ComputedRef<{ [key: string]: string }>;
 }
 
-export const ColorPickerProviderKey = "Vue3ColorPickerProvider";
+export const ColorPickerProviderKey = "ColorPickersProvider";
