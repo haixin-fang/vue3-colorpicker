@@ -9,7 +9,7 @@
           <input :value="state.hex" @input="onInputChange" />
         </div>
         <div class="vc-alpha-input" v-if="!disableAlpha">
-          <input class="vc-alpha-input__inner" :value="state.alpha" @input="onAlphaBlur" />
+          <input class="vc-alpha-input__inner" :value="parseInt(state.alpha)" @input="onAlphaBlur" />
         </div>
       </div>
     </template>

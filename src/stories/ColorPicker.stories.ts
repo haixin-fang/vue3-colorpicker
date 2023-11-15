@@ -180,11 +180,11 @@ const Template: StoryFn<ColorPickerProps> = (args: ColorPickerProps) => {
       const gradientColor = ref<ColorInput>("");
       return { args: args, pureColor, gradientColor };
     },
+    // '<div class="demo-mt">currentColor: {{pureColor}} </div>' +
+    // '<div class="demo-mt" v-if="gradientColor">currentGradientColor: {{gradientColor}} </div>'
     template:
       '<div class="demo">' +
       '<ColorPicker v-model:pureColor="pureColor" v-model:gradientColor="gradientColor" v-bind="args" @activeKeyChange="activeKeyChange" @gradientColorChange="gradientColorChange" @gradientDataChange="onChange" @pureColorChange="pureColorChange" />' +
-      '<div class="demo-mt">currentColor: {{pureColor}} </div>' +
-      '<div class="demo-mt" v-if="gradientColor">currentGradientColor: {{gradientColor}} </div>' +
       "</div>",
     methods: {
       onChange: action("gradientDataChange"),

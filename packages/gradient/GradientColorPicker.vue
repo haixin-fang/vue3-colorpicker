@@ -452,6 +452,7 @@ export default defineComponent({
     background-color: rgba(200, 200, 200, 0.25);
     border-radius: 4px;
     overflow: hidden;
+    margin-bottom: 10px;
 
     .vc-gradient__type {
       padding: 4px 8px;

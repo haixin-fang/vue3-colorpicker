@@ -41,13 +41,13 @@
       <div>
         <ColorPicker
           useType="both"
+          v-model:pureColor="color"
           v-model:gradientColor="gradientColor"
-          :disableHistory="true"
           is-widget
           v-model:activeKey="activeKey"
           v-model:gradientData="gradientData"
           @gradientDataChange="gradientDataChange"
-          gradientType="linear"
+          :picker-container="doc"
         />
         <h3>useType: gradient </h3>
         <h3>
@@ -62,16 +62,15 @@
 <script setup lang="ts">
 import { computed, ref } from "vue";
 import { Color } from "../packages";
-const color = ref("blue");
-const activeKey = ref("graident");
+const color = ref("#00000055");
+const activeKey = ref("pure");
 const gradientColor = ref(
   // "linear-gradient(90deg, rgba(255, 255, 255, 1) 0%, rgba(0, 0, 0, 1) 100%)"
   "linear-gradient(90deg, rgba(255, 167, 39, 0.5) 0%, rgba(0, 0, 0, 1) 60%, rgba(230, 0, 0, 1) 80%,rgba(20, 50, 90, 1) 100% )"
 );
 
-const colors = new Color('#000');
-debugger
-
+const colors = new Color('#00000055');
+const doc = document.querySelector('#app')
 const bg = computed(() => {
   return { background: color.value };
 });
