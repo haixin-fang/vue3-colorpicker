@@ -10,6 +10,7 @@
 - 渐变绑定的数据是linear-gradient字符串,不满足个性化需求,提供了渐变底层数据,可以使用gradientData数据双向绑定或者gradientDataChange方法获取
 - 支持线性或经向渐变按钮自定义展示,通过 gradientType: "linear | radial | both" 控制
 - 修复透明度输入框有小数问题
+- 文档支持事件打印,可直观看数据结构和事件方法
 
 [在线 demo 演示](https://haixin-fang.github.io/colorpickers/)
 
