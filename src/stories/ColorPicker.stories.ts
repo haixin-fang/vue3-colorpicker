@@ -3,7 +3,6 @@ import { ColorPicker } from "../../packages";
 import type { ColorPickerProps } from "../../packages";
 import { ref } from "vue";
 import { ColorInput } from "tinycolor2";
-import { action } from "@storybook/addon-actions";
 
 import "./colorpicker.scss";
 
@@ -184,14 +183,9 @@ const Template: StoryFn<ColorPickerProps> = (args: ColorPickerProps) => {
     // '<div class="demo-mt" v-if="gradientColor">currentGradientColor: {{gradientColor}} </div>'
     template:
       '<div class="demo">' +
-      '<ColorPicker v-model:pureColor="pureColor" v-model:gradientColor="gradientColor" v-bind="args" @activeKeyChange="activeKeyChange" @gradientColorChange="gradientColorChange" @gradientDataChange="onChange" @pureColorChange="pureColorChange" />' +
-      "</div>",
-    methods: {
-      onChange: action("gradientDataChange"),
-      pureColorChange: action("pureColorChange"),
-      gradientColorChange: action("gradientColorChange"),
-      activeKeyChange: action("activeKeyChange"),
-    },
+      '<ColorPicker v-model:pureColor="pureColor" v-model:gradientColor="gradientColor" v-bind="args" />' +
+      "</div>"
+
   };
 };
 
