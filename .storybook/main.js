@@ -13,9 +13,8 @@ module.exports = {
         protocol: "ws"
       };
     } else {
-      config.base = "/colorpickers/";
+      config.base = "/colorpicker/";
     }
-    // return the customized config
     return config;
   },
   stories: ["../src/**/*.stories.mdx", "../src/**/*.stories.@(js|jsx|ts|tsx)"],
