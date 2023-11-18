@@ -7,7 +7,11 @@
     :style="{ zIndex: zIndex }"
     :theme="theme"
   >
-    <component :is="getComponentName" :key="getComponentName" v-bind="getBindArgs" />
+    <component
+      :is="getComponentName"
+      :key="getComponentName"
+      v-bind="getBindArgs"
+    />
   </WrapContainer>
 
   <template v-if="!isWidget">
@@ -16,7 +20,11 @@
       :class="{ round: shape === 'circle' }"
       ref="colorCubeRef"
     >
-      <div class="current-color" :style="getBgColorStyle" @click="onShowPicker"></div>
+      <div
+        class="current-color"
+        :style="getBgColorStyle"
+        @click="onShowPicker"
+      ></div>
     </div>
 
     <teleport :to="pickerContainer">
@@ -28,7 +36,11 @@
           @change="onActiveKeyChange"
           :theme="theme"
         >
-          <component :is="getComponentName" :key="getComponentName" v-bind="getBindArgs" />
+          <component
+            :is="getComponentName"
+            :key="getComponentName"
+            v-bind="getBindArgs"
+          />
         </WrapContainer>
       </div>
     </teleport>
@@ -36,427 +48,441 @@
 </template>
 
 <script lang="ts">
-  import {
-    computed,
-    defineComponent,
-    ExtractPropTypes,
-    PropType,
-    provide,
-    reactive,
-    ref,
-  } from "vue";
-  import { onClickOutside, tryOnMounted, whenever, useDebounceFn } from "@vueuse/core";
-  import tinycolor, { ColorInputWithoutInstance } from "tinycolor2";
-  import { GradientNode, parse, stringify } from "gradient-parser";
-  import { createPopper, Instance } from "@popperjs/core";
-  import propTypes from "vue-types";
+import {
+  computed,
+  defineComponent,
+  ExtractPropTypes,
+  PropType,
+  provide,
+  reactive,
+  ref,
+} from "vue";
+import {
+  onClickOutside,
+  tryOnMounted,
+  whenever,
+  useDebounceFn,
+} from "@vueuse/core";
+import tinycolor, { ColorInputWithoutInstance } from "tinycolor2";
+import { GradientNode, parse, stringify } from "gradient-parser";
+import { createPopper, Instance } from "@popperjs/core";
+import propTypes from "vue-types";
 
-  import FkColorPicker from "./fk/FkColorPicker.vue";
-  import ChromeColorPicker from "./chrome/ChromeColorPicker.vue";
-  import GradientColorPicker from "./gradient/GradientColorPicker.vue";
-  import WrapContainer from "./common/WrapContainer.vue";
+import FkColorPicker from "./fk/FkColorPicker.vue";
+import ChromeColorPicker from "./chrome/ChromeColorPicker.vue";
+import GradientColorPicker from "./gradient/GradientColorPicker.vue";
+import WrapContainer from "./common/WrapContainer.vue";
 
-  import { ColorPickerProvider, ColorPickerProviderKey } from "./utils/type";
-  import { Color, ColorFormat } from "./utils/color";
-  import { Local, type Lang } from "./lang";
+import { ColorPickerProvider, ColorPickerProviderKey } from "./utils/type";
+import { Color, ColorFormat } from "./utils/color";
+import { Local, type Lang } from "./lang";
 
-  const colorPickerProps = {
-    isWidget: propTypes.bool.def(false),
-    pickerType: propTypes.oneOf(["fk", "chrome"]).def("fk"),
-    shape: propTypes.oneOf(["circle", "square"]).def("square"),
-    pureColor: {
-      type: [String, Object] as PropType<ColorInputWithoutInstance>,
-      default: "#000000",
-    },
-    gradientColor: propTypes.string.def(""),
-    format: {
-      type: String as PropType<ColorFormat>,
-      default: "rgb",
-    },
-    disableAlpha: propTypes.bool.def(false),
-    disableHistory: propTypes.bool.def(false),
-    roundHistory: propTypes.bool.def(false),
-    useType: propTypes.oneOf(["pure", "gradient", "both"]).def("pure"),
-    activeKey: propTypes.oneOf(["pure", "gradient"]).def("pure"),
-    lang: {
-      type: String as PropType<Lang>,
-      default: "ZH-cn",
-    },
-    zIndex: propTypes.number.def(9999),
-    pickerContainer: {
-      type: [String, HTMLElement],
-      default: "body",
-    },
-    debounce: propTypes.number.def(100),
-    theme: propTypes.oneOf(["white", "black"]).def("white"),
-    gradientData: propTypes.object.def({}),
-    gradientType: propTypes.oneOf(["both", "liner", "radial"]).def("both"),
-  };
+const colorPickerProps = {
+  isWidget: propTypes.bool.def(false),
+  pickerType: propTypes.oneOf(["fk", "chrome"]).def("fk"),
+  shape: propTypes.oneOf(["circle", "square"]).def("square"),
+  pureColor: {
+    type: [String, Object] as PropType<ColorInputWithoutInstance>,
+    default: "#000000",
+  },
+  gradientColor: propTypes.string.def(""),
+  format: {
+    type: String as PropType<ColorFormat>,
+    default: "rgb",
+  },
+  disableAlpha: propTypes.bool.def(false),
+  disableHistory: propTypes.bool.def(false),
+  roundHistory: propTypes.bool.def(false),
+  useType: propTypes.oneOf(["pure", "gradient", "both"]).def("pure"),
+  activeKey: propTypes.oneOf(["pure", "gradient"]).def("pure"),
+  lang: {
+    type: String as PropType<Lang>,
+    default: "ZH-cn",
+  },
+  zIndex: propTypes.number.def(9999),
+  pickerContainer: {
+    type: [String, HTMLElement],
+    default: "body",
+  },
+  debounce: propTypes.number.def(100),
+  theme: propTypes.oneOf(["white", "black"]).def("white"),
+  gradientData: propTypes.object.def({}),
+  gradientType: propTypes.oneOf(["both", "liner", "radial"]).def("both"),
+};
 
-  type ColorPickerProps = Partial<ExtractPropTypes<typeof colorPickerProps>>;
+type ColorPickerProps = Partial<ExtractPropTypes<typeof colorPickerProps>>;
 
-  export { ColorPickerProps };
+export { ColorPickerProps };
 
-  export default defineComponent({
-    name: "ColorPicker",
-    components: { FkColorPicker, ChromeColorPicker, GradientColorPicker, WrapContainer },
-    inheritAttrs: false,
-    props: colorPickerProps,
-    emits: [
-      "update:pureColor",
-      "pureColorChange",
-      "update:gradientColor",
-      "gradientColorChange",
-      "update:activeKey",
-      "activeKeyChange",
-      "update:gradientData",
-      "gradientDataChange",
-    ],
-    setup(props, { emit }) {
-      provide<ColorPickerProvider>(ColorPickerProviderKey, {
-        lang: computed(() => Local[props.lang || "ZH-cn"]),
-      });
+export default defineComponent({
+  name: "ColorPicker",
+  components: {
+    FkColorPicker,
+    ChromeColorPicker,
+    GradientColorPicker,
+    WrapContainer,
+  },
+  inheritAttrs: false,
+  props: colorPickerProps,
+  emits: [
+    "update:pureColor",
+    "pureColorChange",
+    "update:gradientColor",
+    "gradientColorChange",
+    "update:activeKey",
+    "activeKeyChange",
+    "update:gradientData",
+    "gradientDataChange",
+  ],
+  setup(props, { emit }) {
+    provide<ColorPickerProvider>(ColorPickerProviderKey, {
+      lang: computed(() => Local[props.lang || "ZH-cn"]),
+    });
 
-      const state = reactive<any>({
-        pureColor: props.pureColor || "",
-        activeKey: props.useType === "gradient" ? "gradient" : props.activeKey, //  "pure" | "gradient"
-        isAdvanceMode: false,
-      });
+    const state = reactive<any>({
+      pureColor: props.pureColor || "",
+      activeKey: props.useType === "gradient" ? "gradient" : props.activeKey, //  "pure" | "gradient"
+      isAdvanceMode: false,
+    });
 
-      const startColor = new Color("#000");
-      const endColor = new Color("#000");
-      // const colorList = new Color("#000");
-      const instance: any = new Color(state.pureColor);
-      const gradientState = reactive<any>({
-        startColor,
-        endColor,
-        colors: [],
-        startColorStop: 0,
-        endColorStop: 100,
-        angle: 0,
-        type: "linear",
-        gradientColor: props.gradientColor,
-      });
-      if (!props.gradientColor && props.gradientData && props.gradientData.gradientColor) {
-        gradientState.gradientColor =
-          props.gradientData.gradientColor ||
-          "linear-gradient(90deg, rgba(255, 255, 255, 1) 0%, rgba(0, 0, 0, 1) 100%)";
-      } else if (!props.gradientColor) {
-        gradientState.gradientColor =
-          "linear-gradient(90deg, rgba(255, 255, 255, 1) 0%, rgba(0, 0, 0, 1) 100%)";
+    // const endColor = new Color("#000");
+    // const colorList = new Color("#000");
+    const instance: any = new Color(state.pureColor);
+    const gradientState = reactive<any>({
+      colors: [],
+      angle: 0,
+      type: "linear",
+      gradientColor: props.gradientColor,
+    });
+    if (
+      !props.gradientColor &&
+      props.gradientData &&
+      props.gradientData.gradientColor
+    ) {
+      gradientState.gradientColor =
+        props.gradientData.gradientColor ||
+        "linear-gradient(90deg, rgba(255, 255, 255, 1) 0%, rgba(0, 0, 0, 1) 100%)";
+    } else if (!props.gradientColor) {
+      gradientState.gradientColor =
+        "linear-gradient(90deg, rgba(255, 255, 255, 1) 0%, rgba(0, 0, 0, 1) 100%)";
+    }
+
+    // Ref
+    const colorInstance = ref(instance);
+    const showPicker = ref(false);
+    const colorCubeRef = ref<HTMLElement | null>(null);
+    const pickerRef = ref<HTMLElement | null>(null);
+
+    let popperInstance: Instance | null = null;
+
+    const getBgColorStyle = computed(() => {
+      const bgColor =
+        state.activeKey !== "gradient"
+          ? tinycolor(state.pureColor).toRgbString()
+          : gradientState.gradientColor;
+      return {
+        background: bgColor,
+      };
+    });
+
+    const getComponentName = computed(() => {
+      if (state.activeKey === "gradient") {
+        return GradientColorPicker.name;
       }
 
-      // Ref
-      const colorInstance = ref(instance);
-      const showPicker = ref(false);
-      const colorCubeRef = ref<HTMLElement | null>(null);
-      const pickerRef = ref<HTMLElement | null>(null);
+      return props.pickerType === "fk"
+        ? FkColorPicker.name
+        : ChromeColorPicker.name;
+    });
 
-      let popperInstance: Instance | null = null;
+    const onAdvanceChange = (isAdvance: boolean) => {
+      state.isAdvanceMode = isAdvance;
+    };
 
-      const getBgColorStyle = computed(() => {
-        const bgColor =
-          state.activeKey !== "gradient"
-            ? tinycolor(state.pureColor).toRgbString()
-            : gradientState.gradientColor;
-        return {
-          background: bgColor,
-        };
-      });
-
-      const getComponentName = computed(() => {
-        if (state.activeKey === "gradient") {
-          return GradientColorPicker.name;
-        }
-
-        return props.pickerType === "fk" ? FkColorPicker.name : ChromeColorPicker.name;
-      });
-
-      const onAdvanceChange = (isAdvance: boolean) => {
-        state.isAdvanceMode = isAdvance;
+    const getBindArgs = computed(() => {
+      const commonProps: any = {
+        disableAlpha: props.disableAlpha,
+        disableHistory: props.disableHistory,
+        roundHistory: props.roundHistory,
+        pickerType: props.pickerType,
       };
 
-      const getBindArgs = computed(() => {
-        const commonProps: any = {
-          disableAlpha: props.disableAlpha,
-          disableHistory: props.disableHistory,
-          roundHistory: props.roundHistory,
-          pickerType: props.pickerType,
-        };
-
-        if (state.activeKey === "gradient") {
-          return {
-            ...commonProps,
-            angle: gradientState.angle,
-            type: gradientState.type,
-            colors: gradientState.colors,
-            gradientType: props.gradientType,
-            onAngleChange: (v: number) => {
-              gradientState.angle = v;
-              onGradientChange();
-            },
-            onTypeChange: (type: string) => {
-              gradientState.type = type;
-              onGradientChange();
-            },
-            onGradientChange: (v: Color[]) => {
-              gradientState.colors = v;
-              onGradientChange();
-            },
-            onAdvanceChange: onAdvanceChange,
-          };
-        }
-
+      if (state.activeKey === "gradient") {
         return {
           ...commonProps,
-          disableAlpha: props.disableAlpha,
-          disableHistory: props.disableHistory,
-          roundHistory: props.roundHistory,
-          color: colorInstance.value,
-          onChange: onColorChange,
+          angle: gradientState.angle,
+          type: gradientState.type,
+          colors: gradientState.colors,
+          gradientType: props.gradientType,
+          onAngleChange: (v: number) => {
+            gradientState.angle = v;
+            onGradientChange();
+          },
+          onTypeChange: (type: string) => {
+            gradientState.type = type;
+            onGradientChange();
+          },
+          onGradientChange: (v: Color[]) => {
+            gradientState.colors = v;
+            onGradientChange();
+          },
           onAdvanceChange: onAdvanceChange,
+        };
+      }
+
+      return {
+        ...commonProps,
+        disableAlpha: props.disableAlpha,
+        disableHistory: props.disableHistory,
+        roundHistory: props.roundHistory,
+        color: colorInstance.value,
+        onChange: onColorChange,
+        onAdvanceChange: onAdvanceChange,
+      };
+    });
+
+    const onShowPicker = () => {
+      showPicker.value = true;
+      if (!popperInstance) {
+        initProper();
+      } else {
+        popperInstance.update();
+      }
+    };
+
+    const onHidePicker = () => {
+      showPicker.value = false;
+    };
+
+    const parseGradientColor = () => {
+      try {
+        const [colorNode] = parse(gradientState.gradientColor);
+
+        if (
+          colorNode &&
+          colorNode.type.includes("gradient") &&
+          colorNode.colorStops.length >= 2
+        ) {
+          colorNode.colorStops.forEach((item, index) => {
+            const value = Number(item.length?.value) || 0;
+            const [r, g, b, a] = item.value;
+            gradientState.colors[index] = new Color({
+              r: Number(r),
+              g: Number(g),
+              b: Number(b),
+              a: Number(a),
+            });
+            gradientState.colors[index].pst = value;
+          });
+          // const startColorVal = colorNode.colorStops[0];
+          // const endColorVal = colorNode.colorStops[1];
+
+          // gradientState.startColorStop = Number(startColorVal.length?.value) || 0;
+          // gradientState.endColorStop = Number(endColorVal.length?.value) || 0;
+          if (
+            colorNode.type === "linear-gradient" &&
+            colorNode.orientation?.type === "angular"
+          ) {
+            gradientState.angle = Number(colorNode.orientation?.value) || 0;
+          }
+
+          gradientState.type = colorNode.type.split("-")[0];
+        }
+      } catch (e) {
+        console.log(`[Parse Color]: ${e}`);
+      }
+    };
+
+    const onGradientChange = useDebounceFn(() => {
+      const nodes = color2GradientNode();
+      try {
+        gradientState.gradientColor = stringify(nodes);
+
+        emit("update:gradientColor", gradientState.gradientColor);
+        emit("gradientColorChange", gradientState.gradientColor);
+        const gradientData: any = nodes[0];
+        gradientData.gradientColor = gradientState.gradientColor;
+        emit("gradientDataChange", gradientData);
+        emit("update:gradientData", gradientData);
+      } catch (e) {
+        console.log(e);
+      }
+    }, props.debounce);
+
+    const color2GradientNode = () => {
+      const nodes: GradientNode[] = [];
+      const colors = gradientState.colors.map((item: any) => {
+        const rgb = item.RGB.map((v: number) => v.toString());
+        return {
+          type: "rgba",
+          value: rgb,
+          length: { value: item.pst + "", type: "%" },
         };
       });
 
-      const onShowPicker = () => {
-        showPicker.value = true;
-        if (!popperInstance) {
-          initProper();
-        } else {
-          popperInstance.update();
-        }
-      };
-
-      const onHidePicker = () => {
-        showPicker.value = false;
-      };
-
-      const parseGradientColor = () => {
-        try {
-          const [colorNode] = parse(gradientState.gradientColor);
-
-          if (
-            colorNode &&
-            colorNode.type.includes("gradient") &&
-            colorNode.colorStops.length >= 2
-          ) {
-            colorNode.colorStops.forEach((item, index) => {
-              const value = Number(item.length?.value) || 0;
-              const [r, g, b, a] = item.value;
-              gradientState.colors[index] = new Color({
-                r: Number(r),
-                g: Number(g),
-                b: Number(b),
-                a: Number(a),
-              });
-              gradientState.colors[index].pst = value;
-            });
-            const startColorVal = colorNode.colorStops[0];
-            const endColorVal = colorNode.colorStops[1];
-
-            gradientState.startColorStop = Number(startColorVal.length?.value) || 0;
-            gradientState.endColorStop = Number(endColorVal.length?.value) || 0;
-            if (colorNode.type === "linear-gradient" && colorNode.orientation?.type === "angular") {
-              gradientState.angle = Number(colorNode.orientation?.value) || 0;
-            }
-
-            gradientState.type = colorNode.type.split("-")[0];
-          }
-        } catch (e) {
-          console.log(`[Parse Color]: ${e}`);
-        }
-      };
-
-      const onGradientChange = useDebounceFn(() => {
-        const nodes = color2GradientNode();
-        try {
-          gradientState.gradientColor = stringify(nodes);
-
-          emit("update:gradientColor", gradientState.gradientColor);
-          emit("gradientColorChange", gradientState.gradientColor);
-          const gradientData: any = nodes[0];
-          gradientData.gradientColor = gradientState.gradientColor;
-          emit("gradientDataChange", gradientData);
-          emit("update:gradientData", gradientData);
-        } catch (e) {
-          console.log(e);
-        }
-      }, props.debounce);
-
-      const color2GradientNode = () => {
-        const nodes: GradientNode[] = [];
-        const colors = gradientState.colors.map((item: any) => {
-          const rgb = item.RGB.map((v: number) => v.toString());
-          return {
-            type: "rgba",
-            value: rgb,
-            length: { value: item.pst + "", type: "%" },
-          };
+      if (gradientState.type === "linear") {
+        nodes.push({
+          type: "linear-gradient",
+          orientation: { type: "angular", value: gradientState.angle + "" },
+          colorStops: colors,
         });
+      } else if (gradientState.type === "radial") {
+        nodes.push({
+          type: "radial-gradient",
+          orientation: [{ type: "shape", value: "circle" }],
+          colorStops: colors,
+        });
+      }
 
-        if (gradientState.type === "linear") {
-          nodes.push({
-            type: "linear-gradient",
-            orientation: { type: "angular", value: gradientState.angle + "" },
-            colorStops: colors,
-          });
-        } else if (gradientState.type === "radial") {
-          nodes.push({
-            type: "radial-gradient",
-            orientation: [{ type: "shape", value: "circle" }],
-            colorStops: colors,
-          });
-        }
+      return nodes;
+    };
 
-        return nodes;
-      };
-
-      const initProper = () => {
-        if (colorCubeRef.value && pickerRef.value) {
-          popperInstance = createPopper(colorCubeRef.value, pickerRef.value, {
-            placement: "auto",
-            modifiers: [
-              {
-                name: "offset",
-                options: {
-                  offset: [0, 8],
-                },
+    const initProper = () => {
+      if (colorCubeRef.value && pickerRef.value) {
+        popperInstance = createPopper(colorCubeRef.value, pickerRef.value, {
+          placement: "auto",
+          modifiers: [
+            {
+              name: "offset",
+              options: {
+                offset: [0, 8],
               },
-              {
-                name: "flip",
-                options: {
-                  allowedAutoPlacements: ["top", "bottom", "left", "right"],
-                  rootBoundary: "viewport",
-                },
+            },
+            {
+              name: "flip",
+              options: {
+                allowedAutoPlacements: ["top", "bottom", "left", "right"],
+                rootBoundary: "viewport",
               },
-            ],
-          });
+            },
+          ],
+        });
+      }
+    };
+
+    const onColorChange = (v: Color) => {
+      colorInstance.value = v;
+
+      state.pureColor = v.toString(props.format);
+
+      emitColorChange();
+    };
+
+    const emitColorChange = useDebounceFn(() => {
+      emit("update:pureColor", state.pureColor);
+      emit("pureColorChange", state.pureColor);
+    }, props.debounce);
+
+    onClickOutside(pickerRef, () => {
+      onHidePicker();
+    });
+
+    const onActiveKeyChange = (key: string) => {
+      state.activeKey = key;
+      emit("update:activeKey", key);
+      emit("activeKeyChange", key);
+    };
+
+    tryOnMounted(() => {
+      parseGradientColor();
+      // onInit();
+
+      // emitColorChange();
+      // onGradientChange();
+    });
+
+    whenever(
+      () => props.gradientColor,
+      (value) => {
+        if (value != gradientState.gradientColor) {
+          gradientState.gradientColor = value;
         }
-      };
+      }
+    );
 
-      const onColorChange = (v: Color) => {
-        colorInstance.value = v;
-
-        state.pureColor = v.toString(props.format);
-
-        emitColorChange();
-      };
-
-      const emitColorChange = useDebounceFn(() => {
-        emit("update:pureColor", state.pureColor);
-        emit("pureColorChange", state.pureColor);
-      }, props.debounce);
-
-      onClickOutside(pickerRef, () => {
-        onHidePicker();
-      });
-
-      const onActiveKeyChange = (key: string) => {
-        state.activeKey = key;
-        emit("update:activeKey", key);
-        emit("activeKeyChange", key);
-      };
-
-      tryOnMounted(() => {
+    whenever(
+      () => gradientState.gradientColor,
+      () => {
         parseGradientColor();
-        // onInit();
+      }
+    );
 
-        // emitColorChange();
-        // onGradientChange();
-      });
+    whenever(
+      () => props.activeKey,
+      (value) => {
+        state.activeKey = value;
+      }
+    );
 
-      whenever(
-        () => props.gradientColor,
-        (value) => {
-          if (value != gradientState.gradientColor) {
-            gradientState.gradientColor = value;
-          }
+    whenever(
+      () => props.useType,
+      (value) => {
+        if (state.activeKey !== "gradient" && value === "gradient") {
+          state.activeKey = "gradient";
+        } else {
+          state.activeKey = "pure";
         }
-      );
+      }
+    );
 
-      whenever(
-        () => gradientState.gradientColor,
-        () => {
-          parseGradientColor();
+    whenever(
+      () => props.pureColor,
+      (value) => {
+        const equal = tinycolor.equals(value, state.pureColor);
+
+        if (!equal) {
+          state.pureColor = value;
+          colorInstance.value = new Color(value);
+          // emitColorChange();
         }
-      );
+      },
+      { deep: true }
+    );
 
-      whenever(
-        () => props.activeKey,
-        (value) => {
-          state.activeKey = value;
-        }
-      );
-
-      whenever(
-        () => props.useType,
-        (value) => {
-          if (state.activeKey !== "gradient" && value === "gradient") {
-            state.activeKey = "gradient";
-          } else {
-            state.activeKey = "pure";
-          }
-        }
-      );
-
-      whenever(
-        () => props.pureColor,
-        (value) => {
-          const equal = tinycolor.equals(value, state.pureColor);
-
-          if (!equal) {
-            state.pureColor = value;
-            colorInstance.value = new Color(value);
-            // emitColorChange();
-          }
-        },
-        { deep: true }
-      );
-
-      return {
-        colorCubeRef,
-        pickerRef,
-        showPicker,
-        colorInstance,
-        getBgColorStyle,
-        onColorChange,
-        onShowPicker,
-        onActiveKeyChange,
-        getComponentName,
-        getBindArgs,
-        state,
-      };
-    },
-  });
+    return {
+      colorCubeRef,
+      pickerRef,
+      showPicker,
+      colorInstance,
+      getBgColorStyle,
+      onColorChange,
+      onShowPicker,
+      onActiveKeyChange,
+      getComponentName,
+      getBindArgs,
+      state,
+    };
+  },
+});
 </script>
 
 <style lang="scss" scoped>
-  .vc-color-wrap {
-    margin-right: 10px;
-    width: 50px;
-    height: 24px;
-    box-shadow: 3px 0 5px #00000014;
-    position: relative;
-    cursor: pointer;
-    overflow: hidden;
-    display: inline-block;
-    vertical-align: middle;
+.vc-color-wrap {
+  margin-right: 10px;
+  width: 50px;
+  height: 24px;
+  box-shadow: 3px 0 5px #00000014;
+  position: relative;
+  cursor: pointer;
+  overflow: hidden;
+  display: inline-block;
+  vertical-align: middle;
 
-    &.transparent {
-      background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAwAAAAMCAIAAADZF8uwAAAAGUlEQVQYV2M4gwH+YwCGIasIUwhT25BVBADtzYNYrHvv4gAAAABJRU5ErkJggg==);
-      background-repeat: repeat;
-    }
-
-    &.round {
-      width: 22px;
-      height: 22px;
-      border-radius: 50%;
-      border: 1px solid #d8d8d8;
-    }
-
-    .current-color {
-      width: 100%;
-      height: 100%;
-    }
+  &.transparent {
+    background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAwAAAAMCAIAAADZF8uwAAAAGUlEQVQYV2M4gwH+YwCGIasIUwhT25BVBADtzYNYrHvv4gAAAABJRU5ErkJggg==);
+    background-repeat: repeat;
   }
+
+  &.round {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    border: 1px solid #d8d8d8;
+  }
+
+  .current-color {
+    width: 100%;
+    height: 100%;
+  }
+}
 </style>

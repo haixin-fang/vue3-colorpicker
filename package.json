@@ -6,12 +6,12 @@
   "author": "haixin-fang",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/haixin-fang/colorpickers/issues"
+    "url": "https://github.com/haixin-fang/colorpicker/issues"
   },
   "files": [
     "dist"
   ],
-  "homepage": "https://github.com/haixin-fang/colorpickers#readme",
+  "homepage": "https://github.com/haixin-fang/colorpicker#readme",
   "scripts": {
     "dev": "vite",
     "build": "rimraf dist  && vite build",

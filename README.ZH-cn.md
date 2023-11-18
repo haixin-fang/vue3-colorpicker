@@ -1,4 +1,4 @@
-# colorpicker
+# colorpickers
 
 非常漂亮的一款拾色器,支持多种颜色格式的输入输出,支持渐变色选择。
 
@@ -11,10 +11,11 @@
 - 支持线性或经向渐变按钮自定义展示,通过 gradientType: "linear | radial | both" 控制
 - 修复透明度输入框有小数问题
 - 文档支持事件打印,可直观看数据结构和事件方法
+- 可长期维护
 
-[在线 demo 演示](https://haixin-fang.github.io/colorpickers/)
+[在线 demo 演示](https://haixin-fang.github.io/colorpicker/)
 
-[English](https://github.com/haixin-fang/colorpickers/blob/main/README.md)
+[English](https://github.com/haixin-fang/colorpicker/blob/main/README.md)
 
 ## 安装
 

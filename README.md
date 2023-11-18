@@ -1,10 +1,10 @@
 # colorpicker
 
-A very beautiful color picker, supports input and output of multiple color formats, and supports gradient color selection.
+A very beautiful color picker, supports input and output of multiple color formats, and supports gradient color selection. 
 
-[Live Demo](https://github.com/haixin-fang/colorpickers/)
+[Live Demo](https://github.com/haixin-fang/colorpicker/)
 
-[中文文档](https://github.com/haixin-fang/colorpickers/blob/main/README.ZH-cn.md)
+[中文文档](https://github.com/haixin-fang/colorpicker/blob/main/README.ZH-cn.md)
 
 ![colorpickers](src/assets/example.jpg)
 
