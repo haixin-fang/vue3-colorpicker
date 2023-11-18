@@ -6,9 +6,9 @@
   "author": "haixin-fang",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/haixin-fang/colorpickers/issues"
+    "url": "https://github.com/haixin-fang/colorpicker/issues"
   },
-  "homepage": "https://github.com/haixin-fang/colorpickers#readme",
+  "homepage": "https://github.com/haixin-fang/colorpicker#readme",
   "dependencies": {
     "@aesoper/normal-utils": "^0.1.5",
     "@popperjs/core": "^2.11.8",
