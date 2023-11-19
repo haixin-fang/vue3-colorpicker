@@ -1,6 +1,6 @@
 <template>
   <div class="vc-display">
-    <div class="vc-current-color" v-if="isSupported" @click="open">
+    <div class="vc-current-color" v-if="isSupported && false" @click="open">
       <!-- <div class="color-cube" :style="getBgColorStyle"></div> -->
       <svg
         role="img"
@@ -21,7 +21,7 @@
         />
       </svg>
     </div>
-    <div class="vc-current-color vc-transparent" v-else>
+    <div class="vc-current-color2 vc-transparent" v-else>
       <div class="color-cube" :style="getBgColorStyle"></div>
     </div>
     <template v-if="inputType === 'hex'">
@@ -208,7 +208,27 @@ $color: #666;
   display: flex;
   align-items: center;
   gap: 8px;
+  .vc-current-color2 {
+    width: 50px;
+    height: 100%;
+    box-shadow: 3px 0 5px #00000014;
+    border-radius: 2px;
+    position: relative;
+    cursor: pointer;
+    overflow: hidden;
+    display: inline-block;
+    vertical-align: middle;
 
+    &.vc-transparent {
+      background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAwAAAAMCAIAAADZF8uwAAAAGUlEQVQYV2M4gwH+YwCGIasIUwhT25BVBADtzYNYrHvv4gAAAABJRU5ErkJggg==);
+      background-repeat: repeat;
+    }
+
+    .color-cube {
+      width: 100%;
+      height: 100%;
+    }
+  }
   .vc-current-color {
     display: flex;
     align-items: center;
@@ -226,25 +246,6 @@ $color: #666;
       height: 1em;
       font-size: 20px;
     }
-    // width: 50px;
-    // height: 100%;
-    // box-shadow: 3px 0 5px #00000014;
-    // border-radius: 2px;
-    // position: relative;
-    // cursor: pointer;
-    // overflow: hidden;
-    // display: inline-block;
-    // vertical-align: middle;
-
-    // &.vc-transparent {
-    //   background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAwAAAAMCAIAAADZF8uwAAAAGUlEQVQYV2M4gwH+YwCGIasIUwhT25BVBADtzYNYrHvv4gAAAABJRU5ErkJggg==);
-    //   background-repeat: repeat;
-    // }
-
-    // .color-cube {
-    //   width: 100%;
-    //   height: 100%;
-    // }
   }
 
   .vc-color-input {
