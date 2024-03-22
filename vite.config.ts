@@ -14,4 +14,5 @@ export default defineConfig({
     },
   },
   plugins: [vue(), vueJsx()],
+  base: "/vue3-colorpicker/",
 });
