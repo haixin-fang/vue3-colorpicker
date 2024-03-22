@@ -13,7 +13,7 @@ module.exports = {
         protocol: "ws"
       };
     } else {
-      config.base = "/colorpicker/";
+      config.base = "/vue3-colorpicker/";
     }
     return config;
   },

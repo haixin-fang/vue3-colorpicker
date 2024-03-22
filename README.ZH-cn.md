@@ -13,9 +13,9 @@
 - 文档支持事件打印,可直观看数据结构和事件方法
 - 可长期维护
 
-[在线 demo 演示](https://haixin-fang.github.io/colorpicker/)
+[在线 demo 演示](https://haixin-fang.github.io/vue3-colorpicker/)
 
-[English](https://github.com/haixin-fang/colorpicker/blob/main/README.md)
+[English](https://github.com/haixin-fang/vue3-colorpicker/blob/main/README.md)
 
 ## 安装
 
@@ -78,6 +78,6 @@ components: { ColorPicker },
 </script>
 ```
 
-具体文档请参考 [在线 demo 演示](https://haixin-fang.github.io/colorpickers/)
+具体文档请参考 [在线 demo 演示](https://haixin-fang.github.io/vue3-colorpicker/)
 
 案例代码在 src/stories 目录下

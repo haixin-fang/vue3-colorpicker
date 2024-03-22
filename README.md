@@ -1,10 +1,10 @@
-# colorpicker
+# vue3-colorpicker
 
 A very beautiful color picker, supports input and output of multiple color formats, and supports gradient color selection. 
 
-[Live Demo](https://github.com/haixin-fang/colorpicker/)
+[Live Demo](https://github.com/haixin-fang/vue3-colorpicker/)
 
-[中文文档](https://github.com/haixin-fang/colorpicker/blob/main/README.ZH-cn.md)
+[中文文档](https://github.com/haixin-fang/vue3-colorpicker/blob/main/README.ZH-cn.md)
 
 ![colorpickers](src/assets/example.jpg)
 
@@ -25,23 +25,23 @@ npm install colorpickers
 ### The first step is global registration
 
 ```
-import ColorPickers from "colorpickers";
+import colorpickers from "colorpickers";
 import "colorpickers/style.css";
 
 createApp(App)
   .use(router)
-  .use(ColorPickers)
+  .use(colorpickers)
   .mount("#app");
 ```
 
 OR
 
 ```vue3
-import { ColorPicker } from "colorpickers";
+import { colorpicker } from "colorpickers";
 import "colorpickers/style.css";
 
 export default defineComponent({
-components: { ColorPicker },
+components: { colorpicker },
 });
 ```
 
@@ -70,4 +70,4 @@ components: { ColorPicker },
 
 ```
 
-[Live Demo](https://haixin-fang.github.io/colorpickers/)
+[Live Demo](https://haixin-fang.github.io/vue3-colorpickers/)
